@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:9.3
+    container_name: mysql_api_empresas
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: api_empresas
+      MYSQL_USER: apiuser
+      MYSQL_PASSWORD: apiuser123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - api_network
+
+networks:
+  api_network:
+
+volumes:
+  mysql_data:

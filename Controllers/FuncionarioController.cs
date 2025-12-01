@@ -1,0 +1,51 @@
+using ApiEmpresas.DTOs.Funcionario;
+using ApiEmpresas.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ApiEmpresas.Controllers
+{
+    [ApiController]
+    [Route("api/funcionario")]
+    public class FuncionarioController : ControllerBase
+    {
+        private readonly IFuncionarioService _service;
+
+        public FuncionarioController(IFuncionarioService service)
+        {
+            _service = service;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await _service.GetAllAsync());
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            var funcionario = await _service.GetByIdAsync(id);
+            return funcionario != null ? Ok(funcionario) : NotFound();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateFuncionarioDTO dto)
+        {
+            var funcionario = await _service.CreateAsync(dto);
+            return Ok(funcionario);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, UpdateFuncionarioDTO dto)
+        {
+            var funcionario = await _service.UpdateAsync(id, dto);
+            return Ok(funcionario);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            return await _service.DeleteAsync(id) ? NoContent() : NotFound();
+        }
+    }
+}
