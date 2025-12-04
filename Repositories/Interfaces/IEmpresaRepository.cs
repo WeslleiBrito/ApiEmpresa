@@ -6,5 +6,9 @@ namespace ApiEmpresas.Repositories.Interfaces
     {
         Task<Empresa?> GetEmpresaCompletaAsync(Guid id);
         new Task<IEnumerable<Empresa>> GetAllAsync();
+
+        Task<IEnumerable<EmpresaSetor>> GetEmpresaSetoresAsync(Guid empresaId);
+        void RemoveEmpresaSetores(IEnumerable<EmpresaSetor> setores);
+
     }
 }

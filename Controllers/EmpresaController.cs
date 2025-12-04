@@ -39,12 +39,27 @@ namespace ApiEmpresas.Controllers
             return CreatedAtAction(nameof(Get), new { id = empresa.Id }, empresa);
         }
 
-        [HttpDelete("{id}")]
+        // PUT: api/empresa/{id}
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmpresaDTO dto)
+        {
+            var updatedEmpresa = await _service.UpdateAsync(id, dto);
+            if (updatedEmpresa == null)
+                return NotFound();
+
+            return Ok(updatedEmpresa);
+        }
+
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            bool removed = await _service.DeleteAsync(id);
+            var deletou = await _service.DeleteAsync(id);
 
-            return removed ? NoContent() : NotFound();
+            if (!deletou)
+                return NotFound();
+
+            return NoContent();
         }
+
     }
 }

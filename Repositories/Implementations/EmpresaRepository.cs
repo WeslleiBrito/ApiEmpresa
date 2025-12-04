@@ -20,14 +20,36 @@ namespace ApiEmpresas.Repositories.Implementations
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public new async Task<IEnumerable<Empresa>> GetAllAsync()
-{
-        return await _dbSet
-            .Include(e => e.Endereco)
-            .Include(e => e.Setores)
-                .ThenInclude(es => es.Setor)
-            .ToListAsync();
+        public async Task<Empresa?> GetByCnpjAsync(string cnpj)
+        {
+            return await _dbSet
+                .Include(e => e.Endereco)
+                .Include(e => e.Setores)
+                    .ThenInclude(es => es.Setor)
+                .FirstOrDefaultAsync(e => e.Cnpj == cnpj);
         }
-        
+
+        public new async Task<IEnumerable<Empresa>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(e => e.Endereco)
+                .Include(e => e.Setores)
+                    .ThenInclude(es => es.Setor)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<EmpresaSetor>> GetEmpresaSetoresAsync(Guid empresaId)
+        {
+            return await _context.EmpresaSetores
+                .Where(es => es.EmpresaId == empresaId)
+                .ToListAsync();
+        }
+
+        public void RemoveEmpresaSetores(IEnumerable<EmpresaSetor> setores)
+        {
+            _context.EmpresaSetores.RemoveRange(setores);
+        }
+
+
     }
 }

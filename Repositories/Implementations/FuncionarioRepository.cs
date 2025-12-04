@@ -19,5 +19,19 @@ namespace ApiEmpresas.Repositories.Implementations
                 .Include(f => f.Profissao!.Setor)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
+
+        public async Task<bool> ExisteFuncionarioPorSetorAsync(Guid setorId)
+        {
+            // O funcionário não tem setor direto,
+            // mas tem profissão → que tem SetorId
+            return await _context.Funcionarios
+                .AnyAsync(f => f.Profissao != null && f.Profissao.SetorId == setorId);
+        }
+
+        public async Task<bool> ExisteFuncionarioPorEmpresaAsync(Guid empresaId)
+        {
+            return await _context.Funcionarios.AnyAsync(f => f.EmpresaId == empresaId);
+        }
+
     }
 }
