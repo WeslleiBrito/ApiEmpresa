@@ -29,6 +29,9 @@ namespace ApiEmpresas.Mapping
             CreateMap<CreateEmpresaDTO, Empresa>()
                 .ForMember(dest => dest.Setores, opt => opt.Ignore()); // tratado no service
 
+            CreateMap<UpdateEmpresaDTO, Empresa>()
+                .ForMember(dest => dest.Setores, opt => opt.Ignore()); // setores é tratado manualmente no service
+
 
             // -------------------------------------------------
             // SETOR
@@ -41,7 +44,7 @@ namespace ApiEmpresas.Mapping
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Setor!.Id))
                 .ForMember(dest => dest.Nome, opt => opt.MapFrom(src => src.Setor!.Nome));
 
-
+            
             // -------------------------------------------------
             // PROFISSÃO
             // -------------------------------------------------

@@ -7,6 +7,7 @@ namespace ApiEmpresas.Services.Interfaces
         Task<IEnumerable<EmpresaResponseDTO>> GetAllAsync();
         Task<EmpresaResponseDTO?> GetByIdAsync(Guid id);
         Task<EmpresaResponseDTO> CreateAsync(CreateEmpresaDTO dto);
+        Task<EmpresaResponseDTO> UpdateAsync(Guid id, UpdateEmpresaDTO dto);
         Task<bool> DeleteAsync(Guid id);
     }
 }
