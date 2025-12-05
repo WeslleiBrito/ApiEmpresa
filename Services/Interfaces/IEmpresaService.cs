@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Empresa;
+using ApiEmpresas.Models;
 
 namespace ApiEmpresas.Services.Interfaces
 {

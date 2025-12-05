@@ -8,7 +8,8 @@ namespace ApiEmpresas.Validators
         public CreateSetorDTOValidator()
         {
             RuleFor(x => x.Nome)
-                .NotEmpty().WithMessage("O nome do setor é obrigatório.");
+                .NotEmpty().WithMessage("O nome do setor é obrigatório.")
+                .MaximumLength(30).WithMessage("O nome do setor deve ter no máximo 30 caracteres.");
         }
     }
 }

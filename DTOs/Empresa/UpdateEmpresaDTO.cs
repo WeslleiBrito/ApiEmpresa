@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ApiEmpresas.DTOs.Endereco;
 using ApiEmpresas.Models;
 
@@ -9,6 +10,7 @@ namespace ApiEmpresas.DTOs.Empresa
         public string Cnpj { get; set; } = default!;
         public RegimeTributario RegimeTributario { get; set; }
         public CreateEnderecoDTO Endereco { get; set; } = default!;
+        [JsonPropertyName("SetoresIds")]
         public List<Guid> SetoresIds { get; set; } = [];
     }
 }

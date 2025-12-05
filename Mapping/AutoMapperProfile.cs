@@ -37,6 +37,7 @@ namespace ApiEmpresas.Mapping
             // SETOR
             // -------------------------------------------------
             CreateMap<CreateSetorDTO, Setor>();
+             CreateMap<UpdateSetorDTO, Setor>();
             CreateMap<Setor, SetorResponseDTO>();
 
             // EmpresaSetor → SetorDTO (usado por EmpresaResponseDTO)

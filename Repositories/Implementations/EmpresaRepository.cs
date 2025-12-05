@@ -13,12 +13,13 @@ namespace ApiEmpresas.Repositories.Implementations
 
         public async Task<Empresa?> GetEmpresaCompletaAsync(Guid id)
         {
-            return await _dbSet
-                .Include(e => e.Endereco)
+            return await _context.Empresas
                 .Include(e => e.Setores)
-                .ThenInclude(s => s.Setor)
+                    .ThenInclude(es => es.Setor)
+                .Include(e => e.Endereco)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
+
 
         public async Task<Empresa?> GetByCnpjAsync(string cnpj)
         {
@@ -50,6 +51,36 @@ namespace ApiEmpresas.Repositories.Implementations
             _context.EmpresaSetores.RemoveRange(setores);
         }
 
+        public async Task<Empresa?> GetByIdWithFullDataAsync(Guid id)
+        {
+            return await _context.Empresas
+            .AsNoTracking()
+                .Include(e => e.Setores)
+                    .ThenInclude(es => es.Setor)
+                .Include(e => e.Endereco)
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
 
+
+        public Task<bool> CnpjExisteParaOutraEmpresaAsync(string cnpj, Guid empresaId)
+        {
+            return _context.Empresas
+                .AnyAsync(e => e.Cnpj == cnpj && e.Id != empresaId);
+        }
+
+        public async Task<Empresa?> GetByIdWithFullDataAsNoTrackingAsync(Guid id)
+        {
+            return await _context.Empresas
+                .AsNoTracking() // Importante: Ignora o cache para trazer os nomes dos setores
+                .Include(e => e.Setores)
+                    .ThenInclude(es => es.Setor)
+                .Include(e => e.Endereco)
+                .FirstOrDefaultAsync(e => e.Id == id);
+        }
+
+        public async Task AddEmpresaSetoresAsync(IEnumerable<EmpresaSetor> setores)
+        {
+            await _context.EmpresaSetores.AddRangeAsync(setores);
+        }
     }
 }

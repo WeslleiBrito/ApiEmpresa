@@ -27,23 +27,53 @@ namespace ApiEmpresas.Services.Implementations
         {
             var setor = await _repo.GetByIdAsync(id);
             if (setor == null) return null;
+
             return _mapper.Map<SetorResponseDTO>(setor);
         }
 
         public async Task<SetorResponseDTO> CreateAsync(CreateSetorDTO dto)
         {
             var setor = _mapper.Map<Setor>(dto);
+
+            if( await _repo.ExisteNomeAsync(setor.Nome))
+            {
+                throw new ValidationException("nome", "Já existe um setor com esse nome.");
+            }
+            
             await _repo.AddAsync(setor);
             await _repo.SaveChangesAsync();
+
+            return _mapper.Map<SetorResponseDTO>(setor);
+        }
+
+        public async Task<SetorResponseDTO?> UpdateAsync(Guid id, UpdateSetorDTO dto)
+        {
+            var setor = await _repo.GetByIdAsync(id);
+            if (setor == null) return null;
+
+            setor.Nome = dto.Nome;
+
+            _repo.Update(setor);
+            await _repo.SaveChangesAsync();
+
             return _mapper.Map<SetorResponseDTO>(setor);
         }
 
         public async Task<bool> DeleteAsync(Guid id)
         {
             var setor = await _repo.GetByIdAsync(id);
-            if (setor == null) return false;
+            if (setor == null)
+                return false;
+
+            if (await _repo.ExisteProfissoesAsync(id))
+                return false;
+
+            if (await _repo.ExisteEmpresasAsync(id))
+                return false;
+
             _repo.Delete(setor);
             await _repo.SaveChangesAsync();
+
             return true;
         }
     }
