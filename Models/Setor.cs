@@ -16,5 +16,8 @@ namespace ApiEmpresas.Models
 
         // Profissões pertencem a ESTE setor
         public ICollection<Profissao>? Profissoes { get; set; } = [];
+
+        public ICollection<FuncionarioSetor> Funcionarios { get; set; } = [];
+
     }
 }

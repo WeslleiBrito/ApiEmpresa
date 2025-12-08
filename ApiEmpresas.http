@@ -1,4 +1,4 @@
-@ApiEmpresas_HostAddress = http://localhost:5235
+@ApiEmpresas_HostAddress = http://localhost:5235/swagger
 
 GET {{ApiEmpresas_HostAddress}}/weatherforecast/
 Accept: application/json

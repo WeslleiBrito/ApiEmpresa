@@ -6,6 +6,7 @@ using ApiEmpresas.Services.Interfaces;
 using ApiEmpresas.Services.Implementations;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using ApiEmpresas.Errors;
 
 
 

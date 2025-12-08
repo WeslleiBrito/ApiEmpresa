@@ -12,5 +12,7 @@ namespace ApiEmpresas.Repositories.Interfaces
 
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task SaveChangesAsync();
+
+        Task<bool> ExistsAsync(Guid setorId);
     }
 }

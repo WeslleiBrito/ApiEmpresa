@@ -14,15 +14,18 @@ namespace ApiEmpresas.Repositories.Implementations
         public override async Task<IEnumerable<Profissao>> GetAllAsync()
         {
             return await _dbSet
-                .Include(p => p.Setor)
                 .ToListAsync();
         }
 
         public override async Task<Profissao?> GetByIdAsync(Guid id)
         {
             return await _dbSet
-                .Include(p => p.Setor)
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<bool> ExistsByNomeAsync(string nome)
+        {
+            return await _dbSet.AnyAsync(p => p.Nome == nome);
         }
     }
 }

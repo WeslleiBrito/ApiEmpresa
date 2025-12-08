@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Profissao;
+using ApiEmpresas.Exceptions;
 using ApiEmpresas.Models;
 using ApiEmpresas.Repositories.Interfaces;
 using ApiEmpresas.Services.Interfaces;
@@ -33,6 +34,9 @@ namespace ApiEmpresas.Services.Implementations
     public async Task<ProfissaoResponseDTO> CreateAsync(CreateProfissaoDTO dto)
     {
         var profissao = _mapper.Map<Profissao>(dto);
+
+        if (await _repository.ExistsByNomeAsync(profissao.Nome!)) throw new ConflictException("Já existe uma profissão com esse nome.");
+                
         await _repository.AddAsync(profissao);
         await _repository.SaveChangesAsync();
 

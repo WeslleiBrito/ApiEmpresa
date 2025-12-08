@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Empresa;
+using ApiEmpresas.Exceptions;
 using ApiEmpresas.Models;
 using ApiEmpresas.Repositories.Interfaces;
 using ApiEmpresas.Services.Interfaces;
@@ -33,10 +34,8 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<EmpresaResponseDTO?> GetByIdAsync(Guid id)
         {
-            var empresa = await _repo.GetEmpresaCompletaAsync(id);
-            if (empresa == null)
-                return null;
-
+            var empresa = await _repo.GetEmpresaCompletaAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
+            
             return _mapper.Map<EmpresaResponseDTO>(empresa);
         }
 
@@ -96,10 +95,7 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var empresa = await _repo.GetByIdAsync(id);
-
-            if (empresa == null)
-                return false;
+           var empresa = await _repo.GetEmpresaCompletaAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
 
             // Verificar se há funcionários vinculados
             bool possuiFuncionarios = await _funcionarioRepo.ExisteFuncionarioPorEmpresaAsync(id);
@@ -123,18 +119,26 @@ namespace ApiEmpresas.Services.Implementations
         {
             // 1. Carregar a empresa do banco (Rastreada pelo EF)
             // Isso permite atualizar Nome, CNPJ e Endereço automaticamente
-            var empresa = await _repo.GetByIdWithFullDataAsync(id);
-
-            if (empresa == null)
-                throw new KeyNotFoundException("Empresa não encontrada.");
+            var empresa = await _repo.GetEmpresaCompletaAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
 
             // 2. Validações
             if (await _repo.CnpjExisteParaOutraEmpresaAsync(dto.Cnpj, id))
-                throw new ValidationException("cnpj", "Já existe uma empresa cadastrada com este CNPJ.");
+                throw new ConflictException("O CNPJ informado já está em uso por outra empresa.");
 
             var setoresExistentes = await _setorRepo.GetByIdsAsync(dto.SetoresIds);
-            if (setoresExistentes.Count() != dto.SetoresIds.Count)
-                throw new ValidationException("setores", "Um ou mais setores informados não existem.");
+
+            IEnumerable<object> setoresNaoEncontrados = [];
+
+            foreach (var setorId in dto.SetoresIds)
+            {
+                if (!setoresExistentes.Any(s => s.Id == setorId))
+                {
+                    setoresNaoEncontrados = setoresNaoEncontrados.Append(setorId);
+                }
+            }
+
+            if (setoresNaoEncontrados.Any())
+                throw new NotFoundException("Setor", setoresNaoEncontrados);
 
             if (dto.Endereco == null)
                 throw new ValidationException("endereco", "O endereço é obrigatório.");
@@ -188,11 +192,10 @@ namespace ApiEmpresas.Services.Implementations
             }
 
             // 6. Persistir Tudo
-            // Salva: Updates da Empresa + Deletes de Setores + Inserts de Setores
+            // Salva: Updates da Empresa, dados comuns e endereço
             await _repo.SaveChangesAsync();
 
             // 7. Recarregar dados para Retorno
-            // Usa AsNoTracking para garantir que o AutoMapper receba os nomes dos setores corretos
             var empresaAtualizada = await _repo.GetByIdWithFullDataAsNoTrackingAsync(id);
 
             return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);

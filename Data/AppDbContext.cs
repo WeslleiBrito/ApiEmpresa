@@ -50,14 +50,6 @@ namespace ApiEmpresas.Data
                 .HasForeignKey(es => es.SetorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // --------------------------------------------
-            // Setor → Profissão (1:N)
-            // --------------------------------------------
-            modelBuilder.Entity<Profissao>()
-                .HasOne(p => p.Setor)
-                .WithMany(s => s.Profissoes)
-                .HasForeignKey(p => p.SetorId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             // --------------------------------------------
             // Profissão → Funcionário (1:N)
@@ -68,14 +60,31 @@ namespace ApiEmpresas.Data
                 .HasForeignKey(f => f.ProfissaoId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+
             // --------------------------------------------
-            // Empresa → Funcionário (1:N)
+            // Funcionário → Empresa (1:N)
             // --------------------------------------------
             modelBuilder.Entity<Funcionario>()
-                .HasOne<Empresa>()
-                .WithMany()
+                .HasOne(f => f.Empresa)
+                .WithMany(e => e.Funcionarios)
                 .HasForeignKey(f => f.EmpresaId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            // Funcionário ↔ Setor (N:N)
+            modelBuilder.Entity<FuncionarioSetor>()
+                .HasKey(fs => new { fs.FuncionarioId, fs.SetorId });
+
+            modelBuilder.Entity<FuncionarioSetor>()
+                .HasOne(fs => fs.Funcionario)
+                .WithMany(f => f.Setores)
+                .HasForeignKey(fs => fs.FuncionarioId);
+
+            modelBuilder.Entity<FuncionarioSetor>()
+                .HasOne(fs => fs.Setor)
+                .WithMany(s => s.Funcionarios)
+                .HasForeignKey(fs => fs.SetorId);
+
         }
     }
 }

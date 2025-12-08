@@ -19,7 +19,8 @@ namespace ApiEmpresas.Validators
                 .IsInEnum().WithMessage("Regime tributário inválido.");
 
             RuleFor(x => x.Endereco)
-                .NotNull().WithMessage("O endereço é obrigatório.");
+                .NotNull().WithMessage("O endereço é obrigatório.")
+                .SetValidator(new CreateEnderecoDTOValidator());
 
             RuleForEach(x => x.SetoresIds)
                 .NotEmpty().WithMessage("Cada setorId deve ser informado.");

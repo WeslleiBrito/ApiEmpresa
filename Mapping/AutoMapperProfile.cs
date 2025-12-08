@@ -37,33 +37,60 @@ namespace ApiEmpresas.Mapping
             // SETOR
             // -------------------------------------------------
             CreateMap<CreateSetorDTO, Setor>();
-             CreateMap<UpdateSetorDTO, Setor>();
+            CreateMap<UpdateSetorDTO, Setor>();
             CreateMap<Setor, SetorResponseDTO>();
+            CreateMap<Setor, SetorDTO>();
 
             // EmpresaSetor → SetorDTO (usado por EmpresaResponseDTO)
             CreateMap<EmpresaSetor, SetorDTO>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Setor!.Id))
                 .ForMember(dest => dest.Nome, opt => opt.MapFrom(src => src.Setor!.Nome));
 
-            
+
             // -------------------------------------------------
             // PROFISSÃO
             // -------------------------------------------------
             CreateMap<CreateProfissaoDTO, Profissao>();
-
-            CreateMap<Profissao, ProfissaoResponseDTO>()
-                .ForMember(dest => dest.SetorNome,
-                           opt => opt.MapFrom(src => src.Setor != null ? src.Setor.Nome : null))
-                .ForMember(dest => dest.SetorId,
-                           opt => opt.MapFrom(src => src.SetorId));
-
+            CreateMap<Profissao, ProfissaoResponseDTO>();
 
             // -------------------------------------------------
             // FUNCIONÁRIO
             // -------------------------------------------------
 
             // RESPOSTA
-            CreateMap<Funcionario, FuncionarioResponseDTO>();
+            CreateMap<Funcionario, FuncionarioResponseDTO>()
+                .ForMember(dest => dest.Empresa,
+                    opt => opt.MapFrom(src => src.Empresa != null
+                        ? new Dictionary<string, object>
+                        {
+                            { "Id", src.Empresa.Id },
+                            { "Nome", src.Empresa.Nome }
+                        }: null
+                    )
+                ) 
+
+                .ForMember(dest => dest.Profissao,
+                    opt => opt.MapFrom(src => src.Profissao != null
+                        ? new Dictionary<string, object>
+                        {
+                            { "Id", src.Profissao.Id },
+                            { "Nome", src.Profissao.Nome }
+                        }: null
+                    )
+                )
+
+                .ForMember(dest => dest.Setores,
+                    opt => opt.MapFrom(src => src.Setores != null
+                        ? src.Setores
+                            .Where(fs => fs.Setor != null) // Filtra se o setor for nulo
+                            .Select(fs => new Dictionary<string, object>
+                            {
+                                { "Id", fs.Setor!.Id },
+                                { "Nome", fs.Setor!.Nome }
+                            }).ToList()
+                        : new List<Dictionary<string, object>>()
+                    )
+                ); 
 
             // CREATE
             CreateMap<CreateFuncionarioDTO, Funcionario>();
@@ -71,9 +98,9 @@ namespace ApiEmpresas.Mapping
             // UPDATE
             CreateMap<UpdateFuncionarioDTO, Funcionario>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.EmpresaId, opt => opt.Ignore())
-                .ForMember(dest => dest.Endereco, opt => opt.Ignore()); 
-            
+                .ForPath(dest => dest.Empresa.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Endereco, opt => opt.Ignore());
+
 
         }
     }

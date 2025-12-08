@@ -5,11 +5,11 @@ namespace ApiEmpresas.DTOs.Empresa
 {
     public class CreateEmpresaDTO
     {
-        public string? Nome { get; set; }
-        public string? Cnpj { get; set; }
-        public RegimeTributario RegimeTributario { get; set; }
-
-        public CreateEnderecoDTO? Endereco { get; set; }
-        public List<Guid> SetoresIds { get; set; } = [];
+        public required string Nome { get; set; }
+        public required string Cnpj { get; set; }
+        public required RegimeTributario RegimeTributario { get; set; }
+        public required CreateEnderecoDTO Endereco { get; set; }
+        public string? Telefone { get; set; }
+        public List<Guid>? SetoresIds { get; set; } = [];
     }
 }

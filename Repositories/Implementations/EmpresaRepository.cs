@@ -15,7 +15,7 @@ namespace ApiEmpresas.Repositories.Implementations
         {
             return await _context.Empresas
                 .Include(e => e.Setores)
-                    .ThenInclude(es => es.Setor)
+                .ThenInclude(es => es.Setor)
                 .Include(e => e.Endereco)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
@@ -26,7 +26,7 @@ namespace ApiEmpresas.Repositories.Implementations
             return await _dbSet
                 .Include(e => e.Endereco)
                 .Include(e => e.Setores)
-                    .ThenInclude(es => es.Setor)
+                .ThenInclude(es => es.Setor)
                 .FirstOrDefaultAsync(e => e.Cnpj == cnpj);
         }
 
@@ -35,7 +35,7 @@ namespace ApiEmpresas.Repositories.Implementations
             return await _dbSet
                 .Include(e => e.Endereco)
                 .Include(e => e.Setores)
-                    .ThenInclude(es => es.Setor)
+                .ThenInclude(es => es.Setor)
                 .ToListAsync();
         }
 
@@ -54,9 +54,8 @@ namespace ApiEmpresas.Repositories.Implementations
         public async Task<Empresa?> GetByIdWithFullDataAsync(Guid id)
         {
             return await _context.Empresas
-            .AsNoTracking()
                 .Include(e => e.Setores)
-                    .ThenInclude(es => es.Setor)
+                .ThenInclude(es => es.Setor)
                 .Include(e => e.Endereco)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
@@ -71,9 +70,9 @@ namespace ApiEmpresas.Repositories.Implementations
         public async Task<Empresa?> GetByIdWithFullDataAsNoTrackingAsync(Guid id)
         {
             return await _context.Empresas
-                .AsNoTracking() // Importante: Ignora o cache para trazer os nomes dos setores
+                .AsNoTracking()
                 .Include(e => e.Setores)
-                    .ThenInclude(es => es.Setor)
+                .ThenInclude(es => es.Setor)
                 .Include(e => e.Endereco)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }

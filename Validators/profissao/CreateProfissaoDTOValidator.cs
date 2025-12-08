@@ -10,8 +10,6 @@ namespace ApiEmpresas.Validators
             RuleFor(x => x.Nome)
                 .NotEmpty().WithMessage("O nome da profissão é obrigatório.");
 
-            RuleFor(x => x.SetorId)
-                .NotEmpty().WithMessage("O SetorId é obrigatório.");
         }
     }
 }

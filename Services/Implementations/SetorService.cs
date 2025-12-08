@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Setor;
+using ApiEmpresas.Exceptions;
 using ApiEmpresas.Models;
 using ApiEmpresas.Repositories.Interfaces;
 using ApiEmpresas.Services.Interfaces;
@@ -25,8 +26,7 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<SetorResponseDTO?> GetByIdAsync(Guid id)
         {
-            var setor = await _repo.GetByIdAsync(id);
-            if (setor == null) return null;
+            var setor = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Setor não encontrado.", [id]);
 
             return _mapper.Map<SetorResponseDTO>(setor);
         }
@@ -35,10 +35,7 @@ namespace ApiEmpresas.Services.Implementations
         {
             var setor = _mapper.Map<Setor>(dto);
 
-            if( await _repo.ExisteNomeAsync(setor.Nome))
-            {
-                throw new ValidationException("nome", "Já existe um setor com esse nome.");
-            }
+            if( await _repo.ExisteNomeAsync(setor.Nome)) throw new ConflictException("Já existe um setor com esse nome.");
             
             await _repo.AddAsync(setor);
             await _repo.SaveChangesAsync();
@@ -48,9 +45,10 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<SetorResponseDTO?> UpdateAsync(Guid id, UpdateSetorDTO dto)
         {
-            var setor = await _repo.GetByIdAsync(id);
-            if (setor == null) return null;
+            var setor = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Setor não encontrado.");
 
+            if (await _repo.ExisteNomeParaOutroIdAsync(dto.Nome, id)) throw new ConflictException("Já existe outro setor com esse nome.");
+            
             setor.Nome = dto.Nome;
 
             _repo.Update(setor);
@@ -61,15 +59,9 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var setor = await _repo.GetByIdAsync(id);
-            if (setor == null)
-                return false;
+            var setor = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
 
-            if (await _repo.ExisteProfissoesAsync(id))
-                return false;
-
-            if (await _repo.ExisteEmpresasAsync(id))
-                return false;
+            if (await _repo.ExisteEmpresasAsync(id)) throw new ConflictException("Não é possível deletar o setor pois existem empresas vinculadas a ele.");
 
             _repo.Delete(setor);
             await _repo.SaveChangesAsync();

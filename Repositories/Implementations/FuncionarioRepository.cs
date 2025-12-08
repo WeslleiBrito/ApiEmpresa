@@ -14,18 +14,13 @@ namespace ApiEmpresas.Repositories.Implementations
         public async Task<Funcionario?> GetFuncionarioCompletoAsync(Guid id)
         {
             return await _dbSet
+                .AsNoTracking()
                 .Include(f => f.Endereco)
                 .Include(f => f.Profissao)
-                .Include(f => f.Profissao!.Setor)
+                .Include(f => f.Empresa)
+                .Include(f => f.Setores)
+                .ThenInclude(fs => fs.Setor) 
                 .FirstOrDefaultAsync(f => f.Id == id);
-        }
-
-        public async Task<bool> ExisteFuncionarioPorSetorAsync(Guid setorId)
-        {
-            // O funcionário não tem setor direto,
-            // mas tem profissão → que tem SetorId
-            return await _context.Funcionarios
-                .AnyAsync(f => f.Profissao != null && f.Profissao.SetorId == setorId);
         }
 
         public async Task<bool> ExisteFuncionarioPorEmpresaAsync(Guid empresaId)
@@ -33,5 +28,20 @@ namespace ApiEmpresas.Repositories.Implementations
             return await _context.Funcionarios.AnyAsync(f => f.EmpresaId == empresaId);
         }
 
+        public async Task<bool> ExisteCpfAsync(string cpf)
+        {
+            return await _context.Funcionarios.AnyAsync(f => f.Cpf == cpf);
+        }
+
+        public async Task<IEnumerable<Funcionario>> GetAllCompletoAsync()
+        {
+            return await _context.Funcionarios
+                .AsNoTracking() // Boa prática para leitura (melhora performance)
+                .Include(f => f.Empresa)      // Traz a Empresa
+                .Include(f => f.Profissao)    // Traz a Profissão
+                .Include(f => f.Setores)      // Traz a tabela de meio (FuncionarioSetor)
+                    .ThenInclude(fs => fs.Setor) // <-- ESSA LINHA É CRÍTICA!
+                .ToListAsync();
+        }
     }
 }

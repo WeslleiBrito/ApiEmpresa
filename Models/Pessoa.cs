@@ -9,15 +9,16 @@ namespace ApiEmpresas.Models
 
         [Required]
         [StringLength(120)]
-        public string? Nome { get; set; }
+        public required string Nome { get; set; }
 
         [Required]
-        public TipoPessoa TipoPessoa { get; set; }
+        public abstract TipoPessoa TipoPessoa { get; set; }
 
         [Required]
-        public Endereco Endereco { get; set; } = null!;
+        public required Endereco Endereco { get; set; }
 
         [MaxLength(15)]
         public string? Telefone { get; set; }
+
     }
 }
