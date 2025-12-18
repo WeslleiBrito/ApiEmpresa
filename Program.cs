@@ -36,6 +36,7 @@ builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
 builder.Services.AddScoped<ISetorRepository, SetorRepository>();
 builder.Services.AddScoped<IProfissaoRepository, ProfissaoRepository>();
 builder.Services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
+builder.Services.AddScoped<IHabilidadeRepository, HabilidadeRepository>();
 
 // ------------------------------------------------------
 // SERVICES
@@ -44,6 +45,8 @@ builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<ISetorService, SetorService>();
 builder.Services.AddScoped<IProfissaoService, ProfissaoService>();
 builder.Services.AddScoped<IFuncionarioService, FuncionarioService>();
+builder.Services.AddScoped<IHabilidadeService, HabilidadeService>();
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

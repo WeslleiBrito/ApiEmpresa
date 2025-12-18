@@ -57,6 +57,9 @@ namespace ApiEmpresas.Repositories.Implementations
             return entity != null;
         }
 
-        
+        public void Remove(T entity)
+        {
+            _dbSet.Remove(entity);
+        }
     }
 }

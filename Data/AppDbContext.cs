@@ -15,6 +15,9 @@ namespace ApiEmpresas.Data
         public DbSet<Setor> Setores { get; set; }
         public DbSet<Profissao> Profissoes { get; set; }
         public DbSet<EmpresaSetor> EmpresaSetores { get; set; }
+        public DbSet<FuncionarioHabilidade> FuncionarioHabilidades { get; set; }
+        public DbSet<Habilidade> Habilidades { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

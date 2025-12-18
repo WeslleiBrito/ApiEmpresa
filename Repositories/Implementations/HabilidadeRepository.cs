@@ -34,5 +34,13 @@ namespace ApiEmpresas.Repositories.Implementations
                 .ThenInclude(fh => fh.Funcionario)
                 .FirstOrDefaultAsync(h => h.Id == id);
         }
+
+        public async Task<List<Habilidade>> GetByIdsAsync(IEnumerable<Guid> ids)
+        {
+            return await _context.Habilidades
+                .Where(h => ids.Contains(h.Id))
+                .ToListAsync();
+        }
+
     }
 }

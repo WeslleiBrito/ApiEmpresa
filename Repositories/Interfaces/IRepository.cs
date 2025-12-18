@@ -14,5 +14,7 @@ namespace ApiEmpresas.Repositories.Interfaces
         Task SaveChangesAsync();
 
         Task<bool> ExistsAsync(Guid setorId);
+
+        void Remove(T entity);
     }
 }

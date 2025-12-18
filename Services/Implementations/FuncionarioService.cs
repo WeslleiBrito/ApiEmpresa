@@ -285,48 +285,68 @@ namespace ApiEmpresas.Services.Implementations
         public async Task<FuncionarioResponseDTO> AddHabilidadesAsync(
     Guid funcionarioId,
     AddHabilidadesFuncionarioDTO dto)
-{
-    var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
-        ?? throw new NotFoundException("Funcionário não encontrado.");
-
-    // 1. Validar se as habilidades existem
-    var habilidadesExistentes = await _habilidadeRepo.GetByIdsAsync(dto.HabilidadesIds);
-    var habilidadesExistentesIds = habilidadesExistentes.Select(h => h.Id).ToHashSet();
-
-    var habilidadesInvalidas = dto.HabilidadesIds
-        .Where(id => !habilidadesExistentesIds.Contains(id))
-        .ToList();
-
-    if (habilidadesInvalidas.Any())
-    {
-        throw new NotFoundException(
-            "Habilidade(s) não encontrada(s).",
-            habilidadesInvalidas.Cast<object>()
-        );
-    }
-
-    // 2. Descobrir quais já existem no funcionário
-    var atuais = funcionario.Habilidades
-        .Select(fh => fh.HabilidadeId)
-        .ToHashSet();
-
-    var novosVinculos = dto.HabilidadesIds
-        .Where(id => !atuais.Contains(id))
-        .Select(id => new FuncionarioHabilidade
         {
-            FuncionarioId = funcionarioId,
-            HabilidadeId = id
-        })
-        .ToList();
+            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
+                ?? throw new NotFoundException("Funcionário não encontrado.");
 
-    if (novosVinculos.Any())
-        await _repo.AddFuncionarioHabilidadesAsync(novosVinculos);
+            // 1. Validar se as habilidades existem
+            var habilidadesExistentes = await _habilidadeRepo.GetByIdsAsync(dto.HabilidadesIds);
+            var habilidadesExistentesIds = habilidadesExistentes.Select(h => h.Id).ToHashSet();
 
-    await _repo.SaveChangesAsync();
+            var habilidadesInvalidas = dto.HabilidadesIds
+                .Where(id => !habilidadesExistentesIds.Contains(id))
+                .ToList();
 
-    var atualizado = await _repo.GetFuncionarioCompletoAsNoTrackingAsync(funcionarioId);
-    return _mapper.Map<FuncionarioResponseDTO>(atualizado);
-}
+            if (habilidadesInvalidas.Any())
+            {
+                throw new NotFoundException(
+                    "Habilidade(s) não encontrada(s).",
+                    habilidadesInvalidas.Cast<object>()
+                );
+            }
+
+            // 2. Descobrir quais já existem no funcionário
+            var atuais = funcionario.Habilidades
+                .Select(fh => fh.HabilidadeId)
+                .ToHashSet();
+
+            var novosVinculos = dto.HabilidadesIds
+                .Where(id => !atuais.Contains(id))
+                .Select(id => new FuncionarioHabilidade
+                {
+                    FuncionarioId = funcionarioId,
+                    HabilidadeId = id
+                })
+                .ToList();
+
+            if (novosVinculos.Any())
+                await _repo.AddFuncionarioHabilidadesAsync(novosVinculos);
+
+            await _repo.SaveChangesAsync();
+
+            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
+            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
+        }
+
+        public async Task<FuncionarioResponseDTO> RemoveHabilidadesAsync(Guid funcionarioId, RemoveHabilidadesFuncionarioDTO dto)
+        {
+            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
+                ?? throw new NotFoundException("Funcionário não encontrado.");
+
+            foreach (var habilidadeId in dto.HabilidadesIds)
+            {
+                var vinculo = funcionario.Habilidades.FirstOrDefault(fh => fh.HabilidadeId == habilidadeId);
+                if (vinculo != null)
+                {
+                    funcionario.Habilidades.Remove(vinculo);
+                }
+            }
+
+            await _repo.SaveChangesAsync();
+
+            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
+            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
+        }
 
     }
 }

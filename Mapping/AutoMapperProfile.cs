@@ -3,6 +3,7 @@ using ApiEmpresas.DTOs.Endereco;
 using ApiEmpresas.DTOs.Funcionario;
 using ApiEmpresas.DTOs.Profissao;
 using ApiEmpresas.DTOs.Setor;
+using ApiEmpresas.DTOs.Habilidade;
 using ApiEmpresas.Models;
 using AutoMapper;
 
@@ -111,6 +112,13 @@ namespace ApiEmpresas.Mapping
                 .ForPath(dest => dest.Empresa.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Endereco, opt => opt.Ignore());
 
+            CreateMap<Habilidade, HabilidadeResponseDTO>();
+
+            CreateMap<CreateHabilidadeDTO, Habilidade>();
+
+            CreateMap<UpdateHabilidadeDTO, Habilidade>()
+                .ForAllMembers(opt =>
+                    opt.Condition((src, dest, srcMember) => srcMember != null));
 
         }
     }
