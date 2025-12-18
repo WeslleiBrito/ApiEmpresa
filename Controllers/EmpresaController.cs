@@ -39,17 +39,6 @@ namespace ApiEmpresas.Controllers
             return CreatedAtAction(nameof(Get), new { id = empresa.Id }, empresa);
         }
 
-        // PUT: api/empresa/{id}
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmpresaDTO dto)
-        {
-            var updatedEmpresa = await _service.UpdateAsync(id, dto);
-            if (updatedEmpresa == null)
-                return NotFound();
-
-            return Ok(updatedEmpresa);
-        }
-
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -59,6 +48,31 @@ namespace ApiEmpresas.Controllers
                 return NotFound();
 
             return NoContent();
+        }
+
+        [HttpPatch("{id:guid}")]
+        public async Task<IActionResult> Patch(Guid id, [FromBody] PatchEmpresaDTO dto)
+        {
+            var result = await _service.PatchAsync(id, dto);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
+        [HttpDelete("{empresaId:guid}/setores/{setorId:guid}")]
+        public async Task<IActionResult> RemoveSetor(Guid empresaId, Guid setorId)
+        {
+            var empresaAtualizada = await _service.RemoveSetorAsync(empresaId, setorId);
+            return Ok(empresaAtualizada);
+        }
+
+        [HttpPost("{empresaId:guid}/setores")]
+        public async Task<IActionResult> AddSetores(Guid empresaId, [FromBody] AddSetorDTO dto)
+        {
+            var empresaAtualizada = await _service.AddSetoresAsync(empresaId, dto);
+            return Ok(empresaAtualizada);
         }
 
     }

@@ -85,6 +85,21 @@ namespace ApiEmpresas.Data
                 .WithMany(s => s.Funcionarios)
                 .HasForeignKey(fs => fs.SetorId);
 
+            // --------------------------------------------
+            // Funcionário ↔ Habilidade (N:N)
+            modelBuilder.Entity<FuncionarioHabilidade>()
+                .HasKey(fh => new { fh.FuncionarioId, fh.HabilidadeId });
+
+            modelBuilder.Entity<FuncionarioHabilidade>()
+                .HasOne(fh => fh.Funcionario)
+                .WithMany(f => f.Habilidades)
+                .HasForeignKey(fh => fh.FuncionarioId);
+
+            modelBuilder.Entity<FuncionarioHabilidade>()
+                .HasOne(fh => fh.Habilidade)
+                .WithMany(h => h.Funcionarios)
+                .HasForeignKey(fh => fh.HabilidadeId);
+
         }
     }
 }

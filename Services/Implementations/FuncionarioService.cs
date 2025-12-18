@@ -12,6 +12,7 @@ namespace ApiEmpresas.Services.Implementations
         private readonly IFuncionarioRepository _repo;
         private readonly IEmpresaRepository _empresaRepo;
         private readonly IProfissaoRepository _profissaoRepo;
+        private readonly IHabilidadeRepository _habilidadeRepo;
         private readonly IMapper _mapper;
 
         public FuncionarioService(
@@ -19,11 +20,13 @@ namespace ApiEmpresas.Services.Implementations
             IEmpresaRepository empresaRepo,
             IProfissaoRepository profissaoRepo,
             ISetorRepository setorRepo,
+            IHabilidadeRepository habilidadeRepo,
             IMapper mapper)
         {
             _repo = repo;
             _empresaRepo = empresaRepo;
             _profissaoRepo = profissaoRepo;
+            _habilidadeRepo = habilidadeRepo;
             _mapper = mapper;
         }
 
@@ -93,6 +96,76 @@ namespace ApiEmpresas.Services.Implementations
             var funcionarioCriado = await _repo.GetFuncionarioCompletoAsync(funcionario.Id);
 
             return _mapper.Map<FuncionarioResponseDTO>(funcionarioCriado);
+        }
+
+        public async Task<FuncionarioResponseDTO> AddSetoresAsync(Guid funcionarioId, AddSetorDTO dto)
+        {
+            // Recupera funcionário completo
+            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
+                ?? throw new NotFoundException("Funcionário não encontrado.");
+
+            Guid empresaId = funcionario.EmpresaId;
+
+            // Recupera empresa para validar setores
+            var empresa = await _empresaRepo.GetByIdWithFullDataAsync(empresaId)
+                ?? throw new NotFoundException("A empresa do funcionário não foi encontrada.");
+
+            // Setores existentes na empresa
+            var setoresEmpresaIds = empresa.Setores.Select(s => s.SetorId).ToHashSet();
+
+            // Valida setores informados
+            var setoresInvalidos = dto.SetoresIds
+                .Where(id => !setoresEmpresaIds.Contains(id))
+                .ToList();
+
+            if (setoresInvalidos.Count > 0)
+            {
+                throw new NotFoundException(
+                    "Um ou mais setores informados não existem na empresa do funcionário.",
+                    setoresInvalidos.Cast<object>()
+                );
+            }
+
+            // Setores atuais do funcionário
+            var setoresAtuais = funcionario.Setores.Select(fs => fs.SetorId).ToHashSet();
+
+            // Descobrir novos setores a vincular
+            var novosVinculos = dto.SetoresIds
+                .Where(id => !setoresAtuais.Contains(id))
+                .Select(id => new FuncionarioSetor
+                {
+                    FuncionarioId = funcionarioId,
+                    SetorId = id
+                })
+                .ToList();
+
+            // Adicionar novos vínculos
+            foreach (var vinculo in novosVinculos)
+            {
+                funcionario.Setores.Add(vinculo);
+            }
+
+            await _repo.SaveChangesAsync();
+
+            // Retornar resultado atualizado
+            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
+            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
+        }
+
+        public async Task<FuncionarioResponseDTO> RemoveSetorAsync(Guid funcionarioId, Guid setorId)
+        {
+            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
+                ?? throw new NotFoundException("Funcionário não encontrado.");
+
+            var vinculo = funcionario.Setores.FirstOrDefault(s => s.SetorId == setorId)
+                ?? throw new ValidationException("setorId", "Este setor não está vinculado ao funcionário.");
+
+            funcionario.Setores.Remove(vinculo);
+
+            await _repo.SaveChangesAsync();
+
+            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
+            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
         }
 
         public async Task<FuncionarioResponseDTO> UpdateAsync(Guid id, UpdateFuncionarioDTO dto)
@@ -208,5 +281,52 @@ namespace ApiEmpresas.Services.Implementations
 
             return true;
         }
+
+        public async Task<FuncionarioResponseDTO> AddHabilidadesAsync(
+    Guid funcionarioId,
+    AddHabilidadesFuncionarioDTO dto)
+{
+    var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
+        ?? throw new NotFoundException("Funcionário não encontrado.");
+
+    // 1. Validar se as habilidades existem
+    var habilidadesExistentes = await _habilidadeRepo.GetByIdsAsync(dto.HabilidadesIds);
+    var habilidadesExistentesIds = habilidadesExistentes.Select(h => h.Id).ToHashSet();
+
+    var habilidadesInvalidas = dto.HabilidadesIds
+        .Where(id => !habilidadesExistentesIds.Contains(id))
+        .ToList();
+
+    if (habilidadesInvalidas.Any())
+    {
+        throw new NotFoundException(
+            "Habilidade(s) não encontrada(s).",
+            habilidadesInvalidas.Cast<object>()
+        );
+    }
+
+    // 2. Descobrir quais já existem no funcionário
+    var atuais = funcionario.Habilidades
+        .Select(fh => fh.HabilidadeId)
+        .ToHashSet();
+
+    var novosVinculos = dto.HabilidadesIds
+        .Where(id => !atuais.Contains(id))
+        .Select(id => new FuncionarioHabilidade
+        {
+            FuncionarioId = funcionarioId,
+            HabilidadeId = id
+        })
+        .ToList();
+
+    if (novosVinculos.Any())
+        await _repo.AddFuncionarioHabilidadesAsync(novosVinculos);
+
+    await _repo.SaveChangesAsync();
+
+    var atualizado = await _repo.GetFuncionarioCompletoAsNoTrackingAsync(funcionarioId);
+    return _mapper.Map<FuncionarioResponseDTO>(atualizado);
+}
+
     }
 }

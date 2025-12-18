@@ -47,5 +47,20 @@ namespace ApiEmpresas.Controllers
         {
             return await _service.DeleteAsync(id) ? NoContent() : NotFound();
         }
+
+        [HttpPost("{funcionarioId:guid}/setores")]
+        public async Task<IActionResult> AddSetores(Guid funcionarioId, [FromBody] AddSetorDTO dto)
+        {
+            var result = await _service.AddSetoresAsync(funcionarioId, dto);
+            return Ok(result);
+        }
+
+        [HttpDelete("{funcionarioId:guid}/setores/{setorId:guid}")]
+        public async Task<IActionResult> RemoveSetor(Guid funcionarioId, Guid setorId)
+        {
+            var result = await _service.RemoveSetorAsync(funcionarioId, setorId);
+            return Ok(result);
+        }
+
     }
 }

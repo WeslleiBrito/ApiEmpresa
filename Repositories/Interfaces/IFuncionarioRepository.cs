@@ -9,5 +9,7 @@ namespace ApiEmpresas.Repositories.Interfaces
 
         Task<bool> ExisteCpfAsync(string cpf);
         Task<IEnumerable<Funcionario>> GetAllCompletoAsync();
+        Task AddFuncionarioHabilidadesAsync(IEnumerable<FuncionarioHabilidade> vinculos);
+        void RemoveFuncionarioHabilidades(IEnumerable<FuncionarioHabilidade> vinculos);
     }
 }

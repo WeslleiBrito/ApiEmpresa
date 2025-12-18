@@ -7,6 +7,7 @@ namespace ApiEmpresas.Repositories.Implementations
 {
     public class FuncionarioRepository : Repository<Funcionario>, IFuncionarioRepository
     {
+        
         public FuncionarioRepository(AppDbContext context) : base(context)
         {
         }
@@ -19,7 +20,7 @@ namespace ApiEmpresas.Repositories.Implementations
                 .Include(f => f.Profissao)
                 .Include(f => f.Empresa)
                 .Include(f => f.Setores)
-                .ThenInclude(fs => fs.Setor) 
+                .ThenInclude(fs => fs.Setor)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
@@ -42,6 +43,16 @@ namespace ApiEmpresas.Repositories.Implementations
                 .Include(f => f.Setores)      // Traz a tabela de meio (FuncionarioSetor)
                     .ThenInclude(fs => fs.Setor) // <-- ESSA LINHA É CRÍTICA!
                 .ToListAsync();
+        }
+
+        public async Task AddFuncionarioHabilidadesAsync(IEnumerable<FuncionarioHabilidade> vinculos)
+        {
+            await _context.FuncionarioHabilidades.AddRangeAsync(vinculos);
+        }
+
+        public void RemoveFuncionarioHabilidades(IEnumerable<FuncionarioHabilidade> vinculos)
+        {
+            _context.FuncionarioHabilidades.RemoveRange(vinculos);
         }
     }
 }

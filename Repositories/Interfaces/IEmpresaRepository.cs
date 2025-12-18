@@ -13,6 +13,7 @@ namespace ApiEmpresas.Repositories.Interfaces
         Task<bool> CnpjExisteParaOutraEmpresaAsync(string cnpj, Guid empresaId);
         Task<Empresa?> GetByIdWithFullDataAsNoTrackingAsync(Guid id);
         Task AddEmpresaSetoresAsync(IEnumerable<EmpresaSetor> setores);
+        Task RemoveEmpresaSetorAsync(EmpresaSetor entity);
 
     }
 }

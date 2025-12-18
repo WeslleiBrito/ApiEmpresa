@@ -56,5 +56,7 @@ namespace ApiEmpresas.Repositories.Implementations
             var entity = await GetByIdAsync(id);
             return entity != null;
         }
+
+        
     }
 }

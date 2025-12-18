@@ -81,5 +81,12 @@ namespace ApiEmpresas.Repositories.Implementations
         {
             await _context.EmpresaSetores.AddRangeAsync(setores);
         }
+
+        public async Task RemoveEmpresaSetorAsync(EmpresaSetor entity)
+        {
+            _context.EmpresaSetores.Remove(entity);
+            await Task.CompletedTask;
+        }
+
     }
 }

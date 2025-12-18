@@ -24,5 +24,7 @@ namespace ApiEmpresas.Models
 
         // N:N com Setor
         public ICollection<FuncionarioSetor> Setores { get; set; } = [];
+        // N:N com Habilidade
+        public ICollection<FuncionarioHabilidade> Habilidades { get; set; } = [];
     }
 }

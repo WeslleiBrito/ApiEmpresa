@@ -33,6 +33,16 @@ namespace ApiEmpresas.Mapping
                 .ForMember(dest => dest.Setores, opt => opt.Ignore()); // setores é tratado manualmente no service
 
 
+            CreateMap<PatchEmpresaDTO, Empresa>()
+                .ForAllMembers(opt => opt.Condition(
+                    (src, dest, srcMember) => srcMember != null
+            ));
+
+            CreateMap<PatchEnderecoDTO, Endereco>()
+                .ForAllMembers(opt => opt.Condition(
+                    (src, dest, srcMember) => srcMember != null
+            ));
+
             // -------------------------------------------------
             // SETOR
             // -------------------------------------------------
@@ -65,9 +75,9 @@ namespace ApiEmpresas.Mapping
                         {
                             { "Id", src.Empresa.Id },
                             { "Nome", src.Empresa.Nome }
-                        }: null
+                        } : null
                     )
-                ) 
+                )
 
                 .ForMember(dest => dest.Profissao,
                     opt => opt.MapFrom(src => src.Profissao != null
@@ -75,7 +85,7 @@ namespace ApiEmpresas.Mapping
                         {
                             { "Id", src.Profissao.Id },
                             { "Nome", src.Profissao.Nome }
-                        }: null
+                        } : null
                     )
                 )
 
@@ -90,7 +100,7 @@ namespace ApiEmpresas.Mapping
                             }).ToList()
                         : new List<Dictionary<string, object>>()
                     )
-                ); 
+                );
 
             // CREATE
             CreateMap<CreateFuncionarioDTO, Funcionario>();
