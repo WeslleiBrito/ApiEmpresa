@@ -46,5 +46,16 @@ namespace ApiEmpresas.Controllers
             await _service.DeleteAsync(id);
             return Ok(new { message = "Habilidade removida com sucesso." });
         }
+
+        // PUT: api/habilidades/{id}
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateHabilidadeDTO dto)
+        {
+            var result = await _service.UpdateAsync(id, dto);
+            if (result == null)
+                return NotFound(new { message = "Habilidade não encontrada." });
+
+            return Ok(result);
+        }
     }
 }

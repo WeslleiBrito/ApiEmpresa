@@ -41,6 +41,10 @@ namespace ApiEmpresas.Repositories.Implementations
                 .Where(h => ids.Contains(h.Id))
                 .ToListAsync();
         }
-
+        
+        public async Task<bool> HabilidadeExistsAsync(string nome)
+        {
+            return await _context.Habilidades.AnyAsync(h => h.Nome == nome);
+        }
     }
 }

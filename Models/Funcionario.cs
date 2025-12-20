@@ -16,11 +16,6 @@ namespace ApiEmpresas.Models
         public Guid EmpresaId { get; set; }
         [Required]
         public Empresa Empresa { get; set; } = null!;
-        // Profissão obrigatória
-        [Required]
-        public Guid ProfissaoId { get; set; }
-        
-        public Profissao Profissao { get; set; } = null!;
 
         // N:N com Setor
         public ICollection<FuncionarioSetor> Setores { get; set; } = [];

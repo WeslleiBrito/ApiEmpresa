@@ -11,21 +11,17 @@ namespace ApiEmpresas.Services.Implementations
     {
         private readonly IFuncionarioRepository _repo;
         private readonly IEmpresaRepository _empresaRepo;
-        private readonly IProfissaoRepository _profissaoRepo;
         private readonly IHabilidadeRepository _habilidadeRepo;
         private readonly IMapper _mapper;
 
         public FuncionarioService(
             IFuncionarioRepository repo,
             IEmpresaRepository empresaRepo,
-            IProfissaoRepository profissaoRepo,
-            ISetorRepository setorRepo,
             IHabilidadeRepository habilidadeRepo,
             IMapper mapper)
         {
             _repo = repo;
             _empresaRepo = empresaRepo;
-            _profissaoRepo = profissaoRepo;
             _habilidadeRepo = habilidadeRepo;
             _mapper = mapper;
         }
@@ -51,13 +47,11 @@ namespace ApiEmpresas.Services.Implementations
             // 2. Validar se a Empresa existe
             var empresa = await _empresaRepo.GetByIdWithFullDataAsync(dto.EmpresaId) ?? throw new NotFoundException("A empresa informada não foi encontrada.");
 
-            // 3. Validar se a Profissão existe
-            var profissao = await _profissaoRepo.GetByIdAsync(dto.ProfissaoId) ?? throw new NotFoundException("A profissão informada não foi encontrada.");
 
-            // 4. Validar se os Setores existem e pertencem à Empresa
+            // 3. Validar se os Setores existem e pertencem à Empresa
             List<Guid> setoresIdEmpresa = [.. empresa.Setores.Select(es => es.SetorId)];
 
-            // 5. Verificar se algum dos setores informados não pertence à empresa
+            // 4. Verificar se algum dos setores informados não pertence à empresa
             List<Guid> setoresInvalidos = dto.SetoresId.FindAll((id) => !setoresIdEmpresa.Contains(id));
 
             if (setoresInvalidos.Count != 0)
@@ -68,12 +62,25 @@ namespace ApiEmpresas.Services.Implementations
                 );
             }
 
-            // 6. Mapear e Criar
+            List<Habilidade> habilidadesExistentes = await _habilidadeRepo.GetByIdsAsync(dto.HabilidadesId);
+
+            List<Guid> habilidadesInvalidas = [.. dto.HabilidadesId.Where(id => !habilidadesExistentes.Any(h => h.Id == id))];
+
+            if (habilidadesInvalidas.Count > 0)
+            {
+                throw new NotFoundException(
+                    "Habilidade(s) informada(s) não foram encontradas.",
+                    habilidadesInvalidas.Cast<object>()
+                );
+            }
+
+
+            // 5. Mapear e Criar
             var funcionario = _mapper.Map<Funcionario>(dto);
 
             funcionario.Setores = [];
 
-            // 7. Adicionamos os itens na lista
+            // 6. Adicionamos os itens na lista
             foreach (var setorId in dto.SetoresId)
             {
                 funcionario.Setores.Add(new FuncionarioSetor
@@ -82,12 +89,20 @@ namespace ApiEmpresas.Services.Implementations
                 });
             }
 
+            foreach (var habilidade in habilidadesExistentes)
+            {
+                funcionario.Habilidades.Add(new FuncionarioHabilidade
+                {
+                    HabilidadeId = habilidade.Id
+                });
+            }
+
             if (dto.Telefone != null)
             {
                 funcionario.Telefone = dto.Telefone;
             }
 
-            // 8. Persistir
+            // 7. Persistir
 
             await _repo.AddAsync(funcionario);
             await _repo.SaveChangesAsync();
@@ -213,15 +228,6 @@ namespace ApiEmpresas.Services.Implementations
             funcionario.Salario = dto.Salario;
             funcionario.Telefone = dto.Telefone; // Pode ser nulo, tudo bem.
 
-            // Atualiza Profissão (Se mudou)
-            if (funcionario.ProfissaoId != dto.ProfissaoId)
-            {
-                if (!await _profissaoRepo.ExistsAsync(dto.ProfissaoId))
-                    throw new NotFoundException("A profissão informada não foi encontrada.");
-
-                funcionario.ProfissaoId = dto.ProfissaoId;
-            }
-
             // Atualiza Endereço (Objeto de Valor)
             // Assumimos que o EF Core rastreia a mudança nas propriedades internas
             funcionario.Endereco.Logradouro = dto.Endereco.Logradouro;
@@ -282,9 +288,7 @@ namespace ApiEmpresas.Services.Implementations
             return true;
         }
 
-        public async Task<FuncionarioResponseDTO> AddHabilidadesAsync(
-    Guid funcionarioId,
-    AddHabilidadesFuncionarioDTO dto)
+        public async Task<FuncionarioResponseDTO> AddHabilidadesAsync( Guid funcionarioId, AddHabilidadesFuncionarioDTO dto)
         {
             var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
                 ?? throw new NotFoundException("Funcionário não encontrado.");
@@ -333,7 +337,7 @@ namespace ApiEmpresas.Services.Implementations
             var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
                 ?? throw new NotFoundException("Funcionário não encontrado.");
 
-            foreach (var habilidadeId in dto.HabilidadesIds)
+            foreach (Guid habilidadeId in dto.HabilidadesIds)
             {
                 var vinculo = funcionario.Habilidades.FirstOrDefault(fh => fh.HabilidadeId == habilidadeId);
                 if (vinculo != null)

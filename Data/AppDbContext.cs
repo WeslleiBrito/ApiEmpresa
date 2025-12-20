@@ -11,9 +11,7 @@ namespace ApiEmpresas.Data
 
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<Funcionario> Funcionarios { get; set; }
-
         public DbSet<Setor> Setores { get; set; }
-        public DbSet<Profissao> Profissoes { get; set; }
         public DbSet<EmpresaSetor> EmpresaSetores { get; set; }
         public DbSet<FuncionarioHabilidade> FuncionarioHabilidades { get; set; }
         public DbSet<Habilidade> Habilidades { get; set; }
@@ -52,16 +50,6 @@ namespace ApiEmpresas.Data
                 .WithMany(s => s.Empresas)
                 .HasForeignKey(es => es.SetorId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-
-            // --------------------------------------------
-            // Profissão → Funcionário (1:N)
-            // --------------------------------------------
-            modelBuilder.Entity<Funcionario>()
-                .HasOne(f => f.Profissao)
-                .WithMany(p => p.Funcionarios)
-                .HasForeignKey(f => f.ProfissaoId)
-                .OnDelete(DeleteBehavior.Restrict);
 
 
             // --------------------------------------------

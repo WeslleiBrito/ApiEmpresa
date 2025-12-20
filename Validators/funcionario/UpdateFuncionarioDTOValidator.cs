@@ -12,9 +12,6 @@ namespace ApiEmpresas.Validators
 
             RuleFor(x => x.Salario)
                 .GreaterThan(0).WithMessage("O salário deve ser maior que zero.");
-
-            RuleFor(x => x.ProfissaoId)
-                .NotEmpty().WithMessage("ProfissaoId é obrigatório.");
             
             RuleFor(x => x.Endereco)
                 .NotNull().WithMessage("Endereço é obrigatório.")

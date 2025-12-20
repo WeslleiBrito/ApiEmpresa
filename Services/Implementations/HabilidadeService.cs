@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Habilidade;
+using ApiEmpresas.Exceptions;
 using ApiEmpresas.Models;
 using ApiEmpresas.Repositories.Interfaces;
 using ApiEmpresas.Services.Interfaces;
@@ -33,6 +34,11 @@ public class HabilidadeService : IHabilidadeService
 
     public async Task<HabilidadeResponseDTO> CreateAsync(CreateHabilidadeDTO dto)
     {
+        if (await _repo.HabilidadeExistsAsync(dto.Nome))
+        {
+            throw new ValidationException("nome", "Habilidade com esse nome já existe.");
+        }
+
         var habilidade = _mapper.Map<Habilidade>(dto);
 
         await _repo.AddAsync(habilidade);
@@ -43,9 +49,7 @@ public class HabilidadeService : IHabilidadeService
 
     public async Task<HabilidadeResponseDTO?> UpdateAsync(Guid id, UpdateHabilidadeDTO dto)
     {
-        var habilidade = await _repo.GetByIdAsync(id);
-        if (habilidade == null)
-            return null;
+        var habilidade = await _repo.GetByIdAsync(id) ??  throw new NotFoundException("Habilidade não encontrada.");
 
         _mapper.Map(dto, habilidade);
 

@@ -1,7 +1,6 @@
 using ApiEmpresas.DTOs.Empresa;
 using ApiEmpresas.DTOs.Endereco;
 using ApiEmpresas.DTOs.Funcionario;
-using ApiEmpresas.DTOs.Profissao;
 using ApiEmpresas.DTOs.Setor;
 using ApiEmpresas.DTOs.Habilidade;
 using ApiEmpresas.Models;
@@ -57,35 +56,18 @@ namespace ApiEmpresas.Mapping
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Setor!.Id))
                 .ForMember(dest => dest.Nome, opt => opt.MapFrom(src => src.Setor!.Nome));
 
-
-            // -------------------------------------------------
-            // PROFISSÃO
-            // -------------------------------------------------
-            CreateMap<CreateProfissaoDTO, Profissao>();
-            CreateMap<Profissao, ProfissaoResponseDTO>();
-
             // -------------------------------------------------
             // FUNCIONÁRIO
             // -------------------------------------------------
 
             // RESPOSTA
-            CreateMap<Funcionario, FuncionarioResponseDTO>()
+            _ = CreateMap<Funcionario, FuncionarioResponseDTO>()
                 .ForMember(dest => dest.Empresa,
                     opt => opt.MapFrom(src => src.Empresa != null
                         ? new Dictionary<string, object>
                         {
                             { "Id", src.Empresa.Id },
                             { "Nome", src.Empresa.Nome }
-                        } : null
-                    )
-                )
-
-                .ForMember(dest => dest.Profissao,
-                    opt => opt.MapFrom(src => src.Profissao != null
-                        ? new Dictionary<string, object>
-                        {
-                            { "Id", src.Profissao.Id },
-                            { "Nome", src.Profissao.Nome }
                         } : null
                     )
                 )
@@ -98,6 +80,19 @@ namespace ApiEmpresas.Mapping
                             {
                                 { "Id", fs.Setor!.Id },
                                 { "Nome", fs.Setor!.Nome }
+                            }).ToList()
+                        : new List<Dictionary<string, object>>()
+                    )
+                )
+                .ForMember(dest => dest.Habilidades,
+                    opt => opt.MapFrom(src => src.Habilidades != null
+                        ? src.Habilidades
+                            .Where(fh => fh.Habilidade != null) // Filtra se a habilidade for nula
+                            .Select(fh => new Dictionary<string, object>
+                            {
+                                { "Id", fh.Habilidade!.Id },
+                                { "Nome", fh.Habilidade!.Nome },
+                                { "Descricao", fh.Habilidade.Descricao ?? string.Empty }
                             }).ToList()
                         : new List<Dictionary<string, object>>()
                     )

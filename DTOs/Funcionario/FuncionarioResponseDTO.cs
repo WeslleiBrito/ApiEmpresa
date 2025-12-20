@@ -10,8 +10,8 @@ namespace ApiEmpresas.DTOs.Funcionario
         public string? Cpf { get; set; }
         public required TipoPessoa TipoPessoa { get; set; }
         public decimal Salario { get; set; }
-        public required Dictionary<string, object> Profissao { get; set; }
         public Dictionary<string, object>? Empresa { get; set; }
+        public List<Dictionary<string, object>>? Habilidades { get; set; }
         public List<Dictionary<string, object>>? Setores { get; set; }
         public string? Telefone { get; set; } = null;
         public EnderecoDTO? Endereco { get; set; }
