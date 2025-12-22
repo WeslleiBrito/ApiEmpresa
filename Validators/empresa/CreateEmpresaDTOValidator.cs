@@ -22,9 +22,6 @@ namespace ApiEmpresas.Validators
             RuleFor(x => x.Endereco)
                 .NotNull().WithMessage("O endereço é obrigatório.")
                 .SetValidator(new CreateEnderecoDTOValidator());
-
-            RuleForEach(x => x.SetoresIds)
-                .NotEmpty().WithMessage("Cada setorId deve ser informado.");
             
             RuleFor(x => x.Telefone)
                 .MaximumLength(15).WithMessage("O telefone deve ter no máximo 15 caracteres.")

@@ -42,10 +42,7 @@ namespace ApiEmpresas.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var deletou = await _service.DeleteAsync(id);
-
-            if (!deletou)
-                return NotFound();
+            await _service.DeleteAsync(id);
 
             return NoContent();
         }
@@ -62,10 +59,10 @@ namespace ApiEmpresas.Controllers
         }
 
         [HttpDelete("{empresaId:guid}/setores/{setorId:guid}")]
-        public async Task<IActionResult> RemoveSetor(Guid empresaId, Guid setorId)
+        public async Task<IActionResult> RemoveSetor(Guid empresaId, RemoveSetorDTO dto)
         {
-            var empresaAtualizada = await _service.RemoveSetorAsync(empresaId, setorId);
-            return Ok(empresaAtualizada);
+            await _service.RemoveSetoresAsync(empresaId, dto);
+            return NoContent();
         }
 
         [HttpPost("{empresaId:guid}/setores")]
@@ -74,6 +71,18 @@ namespace ApiEmpresas.Controllers
             var empresaAtualizada = await _service.AddSetoresAsync(empresaId, dto);
             return Ok(empresaAtualizada);
         }
+        [HttpPost("{empresaId:guid}/funcionarios")]
+        public async Task<IActionResult> AddFuncionario(Guid empresaId, [FromBody] AddFuncionarioEmpresaDTO dto)
+        {
+            var empresaAtualizada = await _service.AlocarFuncionarioSetorAsync(empresaId, dto);
+            return Ok(empresaAtualizada);
+        }
 
+        [HttpDelete("{empresaId:guid}/funcionarios")]
+        public async Task<IActionResult> RemoveFuncionario(Guid empresaId, [FromBody] RemoveFuncionarioEmpresaDTO dto)
+        {
+            var empresaAtualizada = await _service.RemoveFuncionarioAsync(empresaId, dto);
+            return Ok(empresaAtualizada);
+        }
     }
 }

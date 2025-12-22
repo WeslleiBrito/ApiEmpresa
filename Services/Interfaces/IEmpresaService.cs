@@ -1,5 +1,5 @@
 using ApiEmpresas.DTOs.Empresa;
-using ApiEmpresas.Models;
+
 
 namespace ApiEmpresas.Services.Interfaces
 {
@@ -10,7 +10,9 @@ namespace ApiEmpresas.Services.Interfaces
         Task<EmpresaResponseDTO> CreateAsync(CreateEmpresaDTO dto);
         Task<bool> DeleteAsync(Guid id);
         Task<EmpresaResponseDTO?> PatchAsync(Guid id, PatchEmpresaDTO dto);
-        Task<EmpresaResponseDTO> AddSetoresAsync(Guid id, AddSetorDTO dto);
-        Task<EmpresaResponseDTO> RemoveSetorAsync(Guid id, Guid setorId);
+        Task<EmpresaResponseDTO> AddSetoresAsync(Guid empresaId, AddSetorDTO dto);
+        Task RemoveSetoresAsync(Guid empresaId, RemoveSetorDTO dto);
+        Task<EmpresaResponseDTO> AlocarFuncionarioSetorAsync(Guid empresaId, AddFuncionarioEmpresaDTO dto);
+        Task<EmpresaResponseDTO> RemoveFuncionarioAsync(Guid empresaId, RemoveFuncionarioEmpresaDTO dto);
     }
 }

@@ -7,5 +7,7 @@ namespace ApiEmpresas.Models
 
         public Guid SetorId { get; set; }
         public Setor Setor { get; set; } = null!;
+
+        public List<FuncionarioSetor> FuncionarioSetores { get; set; } = [];
     }
 }

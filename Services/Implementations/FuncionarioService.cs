@@ -10,18 +10,16 @@ namespace ApiEmpresas.Services.Implementations
     public class FuncionarioService : IFuncionarioService
     {
         private readonly IFuncionarioRepository _repo;
-        private readonly IEmpresaRepository _empresaRepo;
+   
         private readonly IHabilidadeRepository _habilidadeRepo;
         private readonly IMapper _mapper;
 
         public FuncionarioService(
             IFuncionarioRepository repo,
-            IEmpresaRepository empresaRepo,
             IHabilidadeRepository habilidadeRepo,
             IMapper mapper)
         {
             _repo = repo;
-            _empresaRepo = empresaRepo;
             _habilidadeRepo = habilidadeRepo;
             _mapper = mapper;
         }
@@ -44,143 +42,25 @@ namespace ApiEmpresas.Services.Implementations
             // 1. Validar CPF único
             if (await _repo.ExisteCpfAsync(dto.Cpf)) throw new ConflictException("Já existe um funcionário com esse CPF.");
 
-            // 2. Validar se a Empresa existe
-            var empresa = await _empresaRepo.GetByIdWithFullDataAsync(dto.EmpresaId) ?? throw new NotFoundException("A empresa informada não foi encontrada.");
 
-
-            // 3. Validar se os Setores existem e pertencem à Empresa
-            List<Guid> setoresIdEmpresa = [.. empresa.Setores.Select(es => es.SetorId)];
-
-            // 4. Verificar se algum dos setores informados não pertence à empresa
-            List<Guid> setoresInvalidos = dto.SetoresId.FindAll((id) => !setoresIdEmpresa.Contains(id));
-
-            if (setoresInvalidos.Count != 0)
-            {
-                throw new NotFoundException(
-                    "Setor(es) informados não foram encontrados para a empresa selecionada.",
-                    setoresInvalidos.Cast<object>()
-                );
-            }
-
-            List<Habilidade> habilidadesExistentes = await _habilidadeRepo.GetByIdsAsync(dto.HabilidadesId);
-
-            List<Guid> habilidadesInvalidas = [.. dto.HabilidadesId.Where(id => !habilidadesExistentes.Any(h => h.Id == id))];
-
-            if (habilidadesInvalidas.Count > 0)
-            {
-                throw new NotFoundException(
-                    "Habilidade(s) informada(s) não foram encontradas.",
-                    habilidadesInvalidas.Cast<object>()
-                );
-            }
-
-
-            // 5. Mapear e Criar
+            // 2. Mapear e Criar
             var funcionario = _mapper.Map<Funcionario>(dto);
 
-            funcionario.Setores = [];
-
-            // 6. Adicionamos os itens na lista
-            foreach (var setorId in dto.SetoresId)
-            {
-                funcionario.Setores.Add(new FuncionarioSetor
-                {
-                    SetorId = setorId
-                });
-            }
-
-            foreach (var habilidade in habilidadesExistentes)
-            {
-                funcionario.Habilidades.Add(new FuncionarioHabilidade
-                {
-                    HabilidadeId = habilidade.Id
-                });
-            }
+            funcionario.FuncionarioSetorVinculo = [];
 
             if (dto.Telefone != null)
             {
                 funcionario.Telefone = dto.Telefone;
             }
 
-            // 7. Persistir
-
+            // 4. Persistir
             await _repo.AddAsync(funcionario);
             await _repo.SaveChangesAsync();
 
-            // Retorna o DTO mapeado
+            // 5. Retorna o DTO mapeado
             var funcionarioCriado = await _repo.GetFuncionarioCompletoAsync(funcionario.Id);
 
             return _mapper.Map<FuncionarioResponseDTO>(funcionarioCriado);
-        }
-
-        public async Task<FuncionarioResponseDTO> AddSetoresAsync(Guid funcionarioId, AddSetorDTO dto)
-        {
-            // Recupera funcionário completo
-            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
-                ?? throw new NotFoundException("Funcionário não encontrado.");
-
-            Guid empresaId = funcionario.EmpresaId;
-
-            // Recupera empresa para validar setores
-            var empresa = await _empresaRepo.GetByIdWithFullDataAsync(empresaId)
-                ?? throw new NotFoundException("A empresa do funcionário não foi encontrada.");
-
-            // Setores existentes na empresa
-            var setoresEmpresaIds = empresa.Setores.Select(s => s.SetorId).ToHashSet();
-
-            // Valida setores informados
-            var setoresInvalidos = dto.SetoresIds
-                .Where(id => !setoresEmpresaIds.Contains(id))
-                .ToList();
-
-            if (setoresInvalidos.Count > 0)
-            {
-                throw new NotFoundException(
-                    "Um ou mais setores informados não existem na empresa do funcionário.",
-                    setoresInvalidos.Cast<object>()
-                );
-            }
-
-            // Setores atuais do funcionário
-            var setoresAtuais = funcionario.Setores.Select(fs => fs.SetorId).ToHashSet();
-
-            // Descobrir novos setores a vincular
-            var novosVinculos = dto.SetoresIds
-                .Where(id => !setoresAtuais.Contains(id))
-                .Select(id => new FuncionarioSetor
-                {
-                    FuncionarioId = funcionarioId,
-                    SetorId = id
-                })
-                .ToList();
-
-            // Adicionar novos vínculos
-            foreach (var vinculo in novosVinculos)
-            {
-                funcionario.Setores.Add(vinculo);
-            }
-
-            await _repo.SaveChangesAsync();
-
-            // Retornar resultado atualizado
-            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
-            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
-        }
-
-        public async Task<FuncionarioResponseDTO> RemoveSetorAsync(Guid funcionarioId, Guid setorId)
-        {
-            var funcionario = await _repo.GetFuncionarioCompletoAsync(funcionarioId)
-                ?? throw new NotFoundException("Funcionário não encontrado.");
-
-            var vinculo = funcionario.Setores.FirstOrDefault(s => s.SetorId == setorId)
-                ?? throw new ValidationException("setorId", "Este setor não está vinculado ao funcionário.");
-
-            funcionario.Setores.Remove(vinculo);
-
-            await _repo.SaveChangesAsync();
-
-            var atualizado = await _repo.GetFuncionarioCompletoAsync(funcionarioId);
-            return _mapper.Map<FuncionarioResponseDTO>(atualizado);
         }
 
         public async Task<FuncionarioResponseDTO> UpdateAsync(Guid id, UpdateFuncionarioDTO dto)
@@ -191,42 +71,9 @@ namespace ApiEmpresas.Services.Implementations
             // Precisamos do funcionário completo (com Setores e Empresa) para validar as trocas.
             var funcionario = await _repo.GetFuncionarioCompletoAsync(id) ?? throw new NotFoundException("Funcionário não encontrado.");
 
-            // Regra: Não pode zerar os setores
-            if (dto.SetoresId.Count == 0)
-            {
-                throw new ValidationException("SetoresId", "O funcionário deve pertencer a pelo menos um setor.");
-            }
-
-            // Regra: O funcionário deve estar ligado a setores da empresa ATUAL dele.
-            // Como o DTO de Update NÃO tem o campo EmpresaId, assumimos que ele continua na mesma empresa.
-            // Se ele mudasse de empresa, teríamos que validar os setores da NOVA empresa.
-
-            Guid idEmpresaAtual = funcionario.EmpresaId;
-
-            // Buscamos a empresa para garantir que os setores novos pertencem a ela
-            var empresa = await _empresaRepo.GetByIdWithFullDataAsync(idEmpresaAtual) ?? throw new NotFoundException("A empresa vinculada a este funcionário não foi encontrada.");
-
-            // Extraímos os IDs dos setores válidos dessa empresa
-            List<Guid> idsSetoresDaEmpresa = empresa.Setores.Select(es => es.SetorId).ToList();
-
-            // Verificamos se algum ID enviado no DTO NÃO está na lista da empresa
-            var setoresInvalidos = dto.SetoresId.Where(id => !idsSetoresDaEmpresa.Contains(id)).ToList();
-
-            if (setoresInvalidos.Count > 0)
-                throw new NotFoundException(
-                    "Setor(es) informados não foram encontrados para a empresa selecionada.",
-                    setoresInvalidos.Cast<object>()
-                );
-            {
-            }
-
-            // -----------------------------------------------------------------------
-            // 3. ATUALIZAÇÃO DOS CAMPOS SIMPLES
-            // -----------------------------------------------------------------------
 
             funcionario.Nome = dto.Nome;
-            funcionario.Salario = dto.Salario;
-            funcionario.Telefone = dto.Telefone; // Pode ser nulo, tudo bem.
+            funcionario.Telefone = dto.Telefone;
 
             // Atualiza Endereço (Objeto de Valor)
             // Assumimos que o EF Core rastreia a mudança nas propriedades internas
@@ -237,40 +84,6 @@ namespace ApiEmpresas.Services.Implementations
             funcionario.Endereco.Cidade = dto.Endereco.Cidade;
             funcionario.Endereco.Estado = dto.Endereco.Estado;
             funcionario.Endereco.Cep = dto.Endereco.Cep;
-
-            // -----------------------------------------------------------------------
-            // 4. ATUALIZAÇÃO DO RELACIONAMENTO MUITOS-PARA-MUITOS (SETORES)
-            // -----------------------------------------------------------------------
-            // O EF Core precisa saber quem SAIU e quem ENTROU.
-            // Não podemos fazer apenas "funcionario.Setores = novaLista", pois perde o tracking.
-
-            // A. Identificar quem deve ser REMOVIDO (está no banco, mas não no DTO)
-            // Usamos ToList() para materializar e evitar erro de modificação da coleção durante o loop
-            var setoresParaRemover = funcionario.Setores
-                .Where(fs => !dto.SetoresId.Contains(fs.SetorId))
-                .ToList();
-
-            foreach (var setorRemovido in setoresParaRemover)
-            {
-                funcionario.Setores.Remove(setorRemovido);
-            }
-
-            // B. Identificar quem deve ser ADICIONADO (está no DTO, mas não no banco)
-            var idsAtuais = funcionario.Setores.Select(fs => fs.SetorId).ToList();
-            var novosIds = dto.SetoresId.Where(id => !idsAtuais.Contains(id)).ToList();
-
-            foreach (var novoId in novosIds)
-            {
-                funcionario.Setores.Add(new FuncionarioSetor
-                {
-                    SetorId = novoId
-                    // FuncionarioId é preenchido automaticamente pelo EF
-                });
-            }
-
-            // -----------------------------------------------------------------------
-            // 5. PERSISTÊNCIA E RETORNO
-            // -----------------------------------------------------------------------
 
             await _repo.SaveChangesAsync();
 
@@ -301,7 +114,7 @@ namespace ApiEmpresas.Services.Implementations
                 .Where(id => !habilidadesExistentesIds.Contains(id))
                 .ToList();
 
-            if (habilidadesInvalidas.Any())
+            if (habilidadesInvalidas.Count != 0)
             {
                 throw new NotFoundException(
                     "Habilidade(s) não encontrada(s).",

@@ -10,6 +10,5 @@ namespace ApiEmpresas.DTOs.Empresa
         public required RegimeTributario RegimeTributario { get; set; }
         public required CreateEnderecoDTO Endereco { get; set; }
         public string? Telefone { get; set; }
-        public List<Guid>? SetoresIds { get; set; } = [];
     }
 }

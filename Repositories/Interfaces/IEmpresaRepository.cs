@@ -8,12 +8,13 @@ namespace ApiEmpresas.Repositories.Interfaces
         new Task<IEnumerable<Empresa>> GetAllAsync();
 
         Task<IEnumerable<EmpresaSetor>> GetEmpresaSetoresAsync(Guid empresaId);
-        void RemoveEmpresaSetores(IEnumerable<EmpresaSetor> setores);
         Task<Empresa?> GetByIdWithFullDataAsync(Guid id);
         Task<bool> CnpjExisteParaOutraEmpresaAsync(string cnpj, Guid empresaId);
         Task<Empresa?> GetByIdWithFullDataAsNoTrackingAsync(Guid id);
-        Task AddEmpresaSetoresAsync(IEnumerable<EmpresaSetor> setores);
-        Task RemoveEmpresaSetorAsync(EmpresaSetor entity);
+        Task AddSetorAsync(Guid empresaId, Guid setorId);
+        Task RemoveSetorAsync(Guid empresaId, Guid setorId);
+        Task AddFuncionarioAsync(Guid empresaId, Guid setorId, Guid funcionarioId, decimal salario);
+        Task RemoveFuncionarioAsync(Guid empresaId, Guid setorId, Guid funcionarioId);
 
     }
 }

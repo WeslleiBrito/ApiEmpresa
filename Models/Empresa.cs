@@ -13,9 +13,6 @@ namespace ApiEmpresas.Models
 
         public override TipoPessoa TipoPessoa { get; set; } = TipoPessoa.Juridica;
 
-        // Funcionários desta empresa
-        public ICollection<Funcionario> Funcionarios { get; set; } = [];
-
         // N:N com Setor
         public ICollection<EmpresaSetor> Setores { get; set; } = [];
     }

@@ -11,14 +11,9 @@ namespace ApiEmpresas.Models
         public string Cpf { get; set; } = null!;
         
         public override TipoPessoa TipoPessoa { get; set; } = TipoPessoa.Fisica;
-        // Empresa obrigatória
-        [Required]
-        public Guid EmpresaId { get; set; }
-        [Required]
-        public Empresa Empresa { get; set; } = null!;
 
         // N:N com Setor
-        public ICollection<FuncionarioSetor> Setores { get; set; } = [];
+        public ICollection<FuncionarioSetor> FuncionarioSetorVinculo { get; set; } = [];
         // N:N com Habilidade
         public ICollection<FuncionarioHabilidade> Habilidades { get; set; } = [];
     }

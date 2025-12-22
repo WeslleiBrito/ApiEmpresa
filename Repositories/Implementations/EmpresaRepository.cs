@@ -15,29 +15,25 @@ namespace ApiEmpresas.Repositories.Implementations
         {
             return await _context.Empresas
                 .Include(e => e.Setores)
-                .ThenInclude(es => es.Setor)
+                    .ThenInclude(es => es.Setor)
+                        .ThenInclude(s => s.Funcionarios)
+                            .ThenInclude(fs => fs.Funcionario)
                 .Include(e => e.Endereco)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-
-        public async Task<Empresa?> GetByCnpjAsync(string cnpj)
-        {
-            return await _dbSet
-                .Include(e => e.Endereco)
-                .Include(e => e.Setores)
-                .ThenInclude(es => es.Setor)
-                .FirstOrDefaultAsync(e => e.Cnpj == cnpj);
-        }
 
         public new async Task<IEnumerable<Empresa>> GetAllAsync()
         {
             return await _dbSet
                 .Include(e => e.Endereco)
                 .Include(e => e.Setores)
-                .ThenInclude(es => es.Setor)
+                    .ThenInclude(es => es.Setor)
+                        .ThenInclude(s => s.Funcionarios)
+                            .ThenInclude(fs => fs.Funcionario)
                 .ToListAsync();
         }
+
 
         public async Task<IEnumerable<EmpresaSetor>> GetEmpresaSetoresAsync(Guid empresaId)
         {
@@ -46,10 +42,6 @@ namespace ApiEmpresas.Repositories.Implementations
                 .ToListAsync();
         }
 
-        public void RemoveEmpresaSetores(IEnumerable<EmpresaSetor> setores)
-        {
-            _context.EmpresaSetores.RemoveRange(setores);
-        }
 
         public async Task<Empresa?> GetByIdWithFullDataAsync(Guid id)
         {
@@ -77,15 +69,46 @@ namespace ApiEmpresas.Repositories.Implementations
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        public async Task AddEmpresaSetoresAsync(IEnumerable<EmpresaSetor> setores)
+        public Task AddSetorAsync(Guid empresaId, Guid setorId)
         {
-            await _context.EmpresaSetores.AddRangeAsync(setores);
+            _context.EmpresaSetores.Add(new EmpresaSetor
+            {
+                EmpresaId = empresaId,
+                SetorId = setorId
+            });
+
+            return Task.CompletedTask;
         }
 
-        public async Task RemoveEmpresaSetorAsync(EmpresaSetor entity)
+        public async Task RemoveSetorAsync(Guid empresaId, Guid setorId)
         {
-            _context.EmpresaSetores.Remove(entity);
-            await Task.CompletedTask;
+            var vinculo = await _context.EmpresaSetores.FindAsync(empresaId, setorId);
+            if (vinculo != null)
+                _context.EmpresaSetores.Remove(vinculo);
+        }
+
+
+        public async Task AddFuncionarioAsync(Guid empresaId, Guid setorId, Guid funcionarioId, decimal salario)
+        {
+            var vinculo = new FuncionarioSetor
+            {
+                EmpresaId = empresaId,
+                SetorId = setorId,
+                FuncionarioId = funcionarioId,
+                Salario = salario
+            };
+
+            await _context.FuncionarioSetores.AddAsync(vinculo);
+        }
+        public async Task RemoveFuncionarioAsync(Guid empresaId, Guid setorId, Guid funcionarioId)
+        {
+            var vinculo = await _context.FuncionarioSetores.FindAsync(
+                funcionarioId, empresaId, setorId);
+
+            if (vinculo != null)
+            {
+                _context.FuncionarioSetores.Remove(vinculo);
+            }
         }
 
     }

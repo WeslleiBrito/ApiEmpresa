@@ -15,7 +15,7 @@ namespace ApiEmpresas.Data
         public DbSet<EmpresaSetor> EmpresaSetores { get; set; }
         public DbSet<FuncionarioHabilidade> FuncionarioHabilidades { get; set; }
         public DbSet<Habilidade> Habilidades { get; set; }
-
+        public DbSet<FuncionarioSetor> FuncionarioSetores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -52,29 +52,26 @@ namespace ApiEmpresas.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
 
-            // --------------------------------------------
-            // Funcionário → Empresa (1:N)
-            // --------------------------------------------
-            modelBuilder.Entity<Funcionario>()
-                .HasOne(f => f.Empresa)
-                .WithMany(e => e.Funcionarios)
-                .HasForeignKey(f => f.EmpresaId)
-                .OnDelete(DeleteBehavior.Restrict);
-
 
             // Funcionário ↔ Setor (N:N)
             modelBuilder.Entity<FuncionarioSetor>()
-                .HasKey(fs => new { fs.FuncionarioId, fs.SetorId });
+            .HasKey(fs => new { fs.FuncionarioId, fs.EmpresaId, fs.SetorId });
 
             modelBuilder.Entity<FuncionarioSetor>()
                 .HasOne(fs => fs.Funcionario)
-                .WithMany(f => f.Setores)
+                .WithMany(f => f.FuncionarioSetorVinculo)
                 .HasForeignKey(fs => fs.FuncionarioId);
+
+            modelBuilder.Entity<FuncionarioSetor>()
+                .HasOne(fs => fs.Empresa)
+                .WithMany()
+                .HasForeignKey(fs => fs.EmpresaId);
 
             modelBuilder.Entity<FuncionarioSetor>()
                 .HasOne(fs => fs.Setor)
                 .WithMany(s => s.Funcionarios)
                 .HasForeignKey(fs => fs.SetorId);
+
 
             // --------------------------------------------
             // Funcionário ↔ Habilidade (N:N)

@@ -15,15 +15,6 @@ namespace ApiEmpresas.Validators
             RuleFor(x => x.Cpf)
                 .NotEmpty().WithMessage("O CPF é obrigatório.")
                 .Must(CpfValidatorHelper.IsCpf).WithMessage("O CPF informado é inválido.");
-
-            RuleFor(x => x.Salario)
-                .GreaterThan(0).WithMessage("O salário deve ser maior que zero.");
-
-            RuleFor(x => x.EmpresaId)
-                .NotEmpty().WithMessage("EmpresaId é obrigatório.");
-
-            RuleFor(x => x.SetoresId)
-                .NotEmpty().WithMessage("SetorId é obrigatório.");
                 
             RuleFor(x => x.Endereco)
                 .NotNull().WithMessage("Endereço é obrigatório.")
