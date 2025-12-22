@@ -132,7 +132,7 @@ namespace ApiEmpresas.Services.Implementations
 
             await _repo.SaveChangesAsync();
 
-            var empresaAtualizada = await _repo.GetByIdWithFullDataAsNoTrackingAsync(empresaId);
+            var empresaAtualizada = await _repo.GetEmpresaCompletaAsync(empresaId);
 
             return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);
         }

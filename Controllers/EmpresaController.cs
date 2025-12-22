@@ -58,7 +58,7 @@ namespace ApiEmpresas.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("{empresaId:guid}/setores/{setorId:guid}")]
+        [HttpDelete("{empresaId:guid}/setores")]
         public async Task<IActionResult> RemoveSetor(Guid empresaId, RemoveSetorDTO dto)
         {
             await _service.RemoveSetoresAsync(empresaId, dto);
