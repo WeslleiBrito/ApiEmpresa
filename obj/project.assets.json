@@ -3504,19 +3504,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Wesllei Brito\\.nuget\\packages\\": {}
+    "C:\\Users\\wesll\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Faculdade\\desenvolvomento back-end\\ApiEmpresa\\ApiEmpresas.csproj",
+      "projectUniqueName": "C:\\Users\\wesll\\projeto-faculdade\\ApiEmpresa\\ApiEmpresas.csproj",
       "projectName": "ApiEmpresas",
-      "projectPath": "D:\\Faculdade\\desenvolvomento back-end\\ApiEmpresa\\ApiEmpresas.csproj",
-      "packagesPath": "C:\\Users\\Wesllei Brito\\.nuget\\packages\\",
-      "outputPath": "D:\\Faculdade\\desenvolvomento back-end\\ApiEmpresa\\obj\\",
+      "projectPath": "C:\\Users\\wesll\\projeto-faculdade\\ApiEmpresa\\ApiEmpresas.csproj",
+      "packagesPath": "C:\\Users\\wesll\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\wesll\\projeto-faculdade\\ApiEmpresa\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Wesllei Brito\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\wesll\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -3596,7 +3596,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

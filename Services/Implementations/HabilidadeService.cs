@@ -26,10 +26,9 @@ public class HabilidadeService : IHabilidadeService
 
     public async Task<HabilidadeResponseDTO?> GetByIdAsync(Guid id)
     {
-        var habilidade = await _repo.GetByIdAsync(id);
-        return habilidade == null
-            ? null
-            : _mapper.Map<HabilidadeResponseDTO>(habilidade);
+        var habilidade = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Habilidade não encontrada.", true);
+
+        return _mapper.Map<HabilidadeResponseDTO>(habilidade);
     }
 
     public async Task<HabilidadeResponseDTO> CreateAsync(CreateHabilidadeDTO dto)
@@ -49,7 +48,7 @@ public class HabilidadeService : IHabilidadeService
 
     public async Task<HabilidadeResponseDTO?> UpdateAsync(Guid id, UpdateHabilidadeDTO dto)
     {
-        var habilidade = await _repo.GetByIdAsync(id) ??  throw new NotFoundException("Habilidade não encontrada.");
+        var habilidade = await _repo.GetByIdAsync(id) ??  throw new NotFoundException("Habilidade não encontrada.", true);
 
         _mapper.Map(dto, habilidade);
 
@@ -60,9 +59,11 @@ public class HabilidadeService : IHabilidadeService
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var habilidade = await _repo.GetByIdAsync(id);
-        if (habilidade == null)
-            return false;
+        var habilidade = await _repo.GetByIdAsync(id) ?? throw new NotFoundException("Habilidade não encontrada.", true);
+
+        if(await _repo.GetByIdWithFuncionariosAsync(id) != null){
+            throw new ConflictException("Não é permito excluir uma habilidade ligada a um funcionário.");
+        }
 
         _repo.Remove(habilidade);
         await _repo.SaveChangesAsync();

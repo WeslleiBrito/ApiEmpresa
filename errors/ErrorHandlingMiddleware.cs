@@ -47,6 +47,17 @@ namespace ApiEmpresas.Errors
                     message = ex.Message
                 });
             }
+            catch(ConflictException ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                context.Response.ContentType = "application/json";
+
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    status = 409,
+                    message = ex.Message
+                });
+            }
             catch (Exception)
             {
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
@@ -91,8 +102,6 @@ namespace ApiEmpresas.Errors
                 default:
                     context.Response.StatusCode = 500;
                     _logger.LogError(ex, "Erro não tratado ocorrido.");
-                    // Em produção, não mostre ex.Message, deixe a mensagem genérica.
-                    // Em dev, você pode colocar ex.Message para debug.
                     break;
             }
 
