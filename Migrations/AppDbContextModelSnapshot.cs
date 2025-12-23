@@ -62,27 +62,6 @@ namespace ApiEmpresas.Migrations
                     b.UseTptMappingStrategy();
                 });
 
-            modelBuilder.Entity("ApiEmpresas.Models.Profissao", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Nome")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("varchar(120)");
-
-                    b.Property<Guid>("SetorId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SetorId");
-
-                    b.ToTable("Profissoes");
-                });
-
             modelBuilder.Entity("ApiEmpresas.Models.Setor", b =>
                 {
                     b.Property<Guid>("Id")
@@ -97,6 +76,71 @@ namespace ApiEmpresas.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Setores");
+                });
+
+            modelBuilder.Entity("FuncionarioHabilidade", b =>
+                {
+                    b.Property<Guid>("FuncionarioId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("HabilidadeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("DataObtencao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Observacao")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("FuncionarioId", "HabilidadeId");
+
+                    b.HasIndex("HabilidadeId");
+
+                    b.ToTable("FuncionarioHabilidades");
+                });
+
+            modelBuilder.Entity("FuncionarioSetor", b =>
+                {
+                    b.Property<Guid>("FuncionarioId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("EmpresaId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SetorId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Salario")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("FuncionarioId", "EmpresaId", "SetorId");
+
+                    b.HasIndex("SetorId");
+
+                    b.HasIndex("EmpresaId", "SetorId");
+
+                    b.ToTable("FuncionarioSetores");
+                });
+
+            modelBuilder.Entity("Habilidade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Habilidades");
                 });
 
             modelBuilder.Entity("ApiEmpresas.Models.Empresa", b =>
@@ -118,18 +162,12 @@ namespace ApiEmpresas.Migrations
                 {
                     b.HasBaseType("ApiEmpresas.Models.Pessoa");
 
-                    b.Property<Guid>("EmpresaId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("ProfissaoId")
-                        .HasColumnType("char(36)");
+                    b.Property<string>("Cpf")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<decimal>("Salario")
                         .HasColumnType("decimal(65,30)");
-
-                    b.HasIndex("EmpresaId");
-
-                    b.HasIndex("ProfissaoId");
 
                     b.ToTable("Funcionarios", (string)null);
                 });
@@ -206,13 +244,54 @@ namespace ApiEmpresas.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ApiEmpresas.Models.Profissao", b =>
+            modelBuilder.Entity("FuncionarioHabilidade", b =>
                 {
-                    b.HasOne("ApiEmpresas.Models.Setor", "Setor")
-                        .WithMany("Profissoes")
-                        .HasForeignKey("SetorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                    b.HasOne("ApiEmpresas.Models.Funcionario", "Funcionario")
+                        .WithMany("Habilidades")
+                        .HasForeignKey("FuncionarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Habilidade", "Habilidade")
+                        .WithMany("Funcionarios")
+                        .HasForeignKey("HabilidadeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Funcionario");
+
+                    b.Navigation("Habilidade");
+                });
+
+            modelBuilder.Entity("FuncionarioSetor", b =>
+                {
+                    b.HasOne("ApiEmpresas.Models.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiEmpresas.Models.Funcionario", "Funcionario")
+                        .WithMany("FuncionarioSetorVinculo")
+                        .HasForeignKey("FuncionarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiEmpresas.Models.Setor", "Setor")
+                        .WithMany("Funcionarios")
+                        .HasForeignKey("SetorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ApiEmpresas.Models.EmpresaSetor", null)
+                        .WithMany("FuncionarioSetores")
+                        .HasForeignKey("EmpresaId", "SetorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("Funcionario");
 
                     b.Navigation("Setor");
                 });
@@ -228,42 +307,40 @@ namespace ApiEmpresas.Migrations
 
             modelBuilder.Entity("ApiEmpresas.Models.Funcionario", b =>
                 {
-                    b.HasOne("ApiEmpresas.Models.Empresa", null)
-                        .WithMany()
-                        .HasForeignKey("EmpresaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ApiEmpresas.Models.Pessoa", null)
                         .WithOne()
                         .HasForeignKey("ApiEmpresas.Models.Funcionario", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("ApiEmpresas.Models.Profissao", "Profissao")
-                        .WithMany("Funcionarios")
-                        .HasForeignKey("ProfissaoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Profissao");
                 });
 
-            modelBuilder.Entity("ApiEmpresas.Models.Profissao", b =>
+            modelBuilder.Entity("ApiEmpresas.Models.EmpresaSetor", b =>
                 {
-                    b.Navigation("Funcionarios");
+                    b.Navigation("FuncionarioSetores");
                 });
 
             modelBuilder.Entity("ApiEmpresas.Models.Setor", b =>
                 {
                     b.Navigation("Empresas");
 
-                    b.Navigation("Profissoes");
+                    b.Navigation("Funcionarios");
+                });
+
+            modelBuilder.Entity("Habilidade", b =>
+                {
+                    b.Navigation("Funcionarios");
                 });
 
             modelBuilder.Entity("ApiEmpresas.Models.Empresa", b =>
                 {
                     b.Navigation("Setores");
+                });
+
+            modelBuilder.Entity("ApiEmpresas.Models.Funcionario", b =>
+                {
+                    b.Navigation("FuncionarioSetorVinculo");
+
+                    b.Navigation("Habilidades");
                 });
 #pragma warning restore 612, 618
         }

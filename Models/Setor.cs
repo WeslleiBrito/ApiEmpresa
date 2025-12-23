@@ -14,7 +14,7 @@ namespace ApiEmpresas.Models
         // Setor global → pode ser usado por várias empresas
         public ICollection<EmpresaSetor>? Empresas { get; set; } = [];
 
-        // Profissões pertencem a ESTE setor
-        public ICollection<Profissao>? Profissoes { get; set; } = [];
+        public ICollection<FuncionarioSetor> Funcionarios { get; set; } = [];
+
     }
 }

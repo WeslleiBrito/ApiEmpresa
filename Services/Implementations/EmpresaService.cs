@@ -1,4 +1,5 @@
 using ApiEmpresas.DTOs.Empresa;
+using ApiEmpresas.Exceptions;
 using ApiEmpresas.Models;
 using ApiEmpresas.Repositories.Interfaces;
 using ApiEmpresas.Services.Interfaces;
@@ -33,9 +34,7 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<EmpresaResponseDTO?> GetByIdAsync(Guid id)
         {
-            var empresa = await _repo.GetEmpresaCompletaAsync(id);
-            if (empresa == null)
-                return null;
+            var empresa = await _repo.GetEmpresaCompletaAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
 
             return _mapper.Map<EmpresaResponseDTO>(empresa);
         }
@@ -45,27 +44,6 @@ namespace ApiEmpresas.Services.Implementations
             // mapear
             var empresa = _mapper.Map<Empresa>(dto);
 
-            if (dto.SetoresIds != null && dto.SetoresIds.Any())
-            {
-                var setoresExistentes = await _setorRepo.GetByIdsAsync(dto.SetoresIds);
-                var setoresExistentesIds = setoresExistentes.Select(s => s.Id).ToHashSet();
-
-                var setoresInvalidos = dto.SetoresIds
-                    .Where(id => !setoresExistentesIds.Contains(id))
-                    .ToList();
-
-                if (setoresInvalidos.Any())
-                {
-                    throw new ValidationException(
-                        "SetoresIds",
-                        $"{string.Join(", ", setoresInvalidos)}"
-                    );
-                }
-            }
-            else
-            {
-                dto.SetoresIds = [];
-            }
 
             // verificar se já existe empresa com o mesmo CNPJ
 
@@ -78,12 +56,6 @@ namespace ApiEmpresas.Services.Implementations
                     "Já existe uma empresa cadastrada com este CNPJ."
                 );
             }
-            // criar vínculos empresa-setor
-            empresa.Setores = dto.SetoresIds
-                .Select(setorId => new EmpresaSetor
-                {
-                    SetorId = setorId
-                }).ToList();
 
             await _repo.AddAsync(empresa);
             await _repo.SaveChangesAsync();
@@ -96,21 +68,7 @@ namespace ApiEmpresas.Services.Implementations
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            var empresa = await _repo.GetByIdAsync(id);
-
-            if (empresa == null)
-                return false;
-
-            // Verificar se há funcionários vinculados
-            bool possuiFuncionarios = await _funcionarioRepo.ExisteFuncionarioPorEmpresaAsync(id);
-
-            if (possuiFuncionarios)
-                return false; // ou lançar exceção se preferir
-
-            // Remover vínculos com Setores
-            var setores = await _repo.GetEmpresaSetoresAsync(id);
-            if (setores.Any())
-                _repo.RemoveEmpresaSetores(setores);
+            var empresa = await _repo.GetEmpresaCompletaAsync(id) ?? throw new NotFoundException("Empresa não encontrada.");
 
             _repo.Delete(empresa);
             await _repo.SaveChangesAsync();
@@ -118,50 +76,177 @@ namespace ApiEmpresas.Services.Implementations
             return true;
         }
 
-
-        public async Task<EmpresaResponseDTO> UpdateAsync(Guid id, UpdateEmpresaDTO dto)
+        public async Task<EmpresaResponseDTO?> PatchAsync(Guid empresaId, PatchEmpresaDTO dto)
         {
-            var empresa = await _repo.GetEmpresaCompletaAsync(id)
-                ?? throw new ValidationException("id", $"Empresa não encontrada para o ID [{id}].");
+            var empresa = await _repo.GetEmpresaCompletaAsync(empresaId) ?? throw new NotFoundException("Empresa não encontrada.");
 
-            // 1. Validar setores
-            var setoresExistentes = await _setorRepo.GetByIdsAsync(dto.SetoresIds);
-            var existentesIds = setoresExistentes.Select(s => s.Id).ToHashSet();
-
-            var setoresInvalidos = dto.SetoresIds.Where(id => !existentesIds.Contains(id)).ToList();
-            if (setoresInvalidos.Any())
-                throw new ValidationException("SetoresIds", $"Setores inexistentes: {string.Join(", ", setoresInvalidos)}");
-
-            // 2. Verificar setores que serão REMOVIDOS
-            var setoresAtuais = empresa.Setores.Select(s => s.SetorId).ToHashSet();
-            var setoresParaRemover = setoresAtuais.Except(dto.SetoresIds).ToList();
-
-            if (setoresParaRemover.Any())
-            {
-                foreach (var setorId in setoresParaRemover)
-                {
-                    bool possuiFuncionarios = await _funcionarioRepo.ExisteFuncionarioPorSetorAsync(setorId);
-                    if (possuiFuncionarios)
-                        throw new ValidationException("SetoresIds", $"Não é possível remover o setor {setorId} pois há funcionários vinculados.");
-                }
-            }
-
-            // 3. Atualizar dados simples
+            // Atualiza SOMENTE o que veio no DTO
             _mapper.Map(dto, empresa);
 
-            // 4. Atualizar setores (limpa e recria)
-            empresa.Setores.Clear();
-            empresa.Setores = dto.SetoresIds
-                .Select(id => new EmpresaSetor { SetorId = id })
-                .ToList();
-
-            _repo.Update(empresa);
             await _repo.SaveChangesAsync();
 
-            var empresaAtualizada = await _repo.GetEmpresaCompletaAsync(empresa.Id);
+            var empresaAtualizada = await _repo.GetEmpresaCompletaAsync(empresaId);
             return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);
         }
 
+        public async Task<EmpresaResponseDTO> AddSetoresAsync(Guid empresaId, AddSetorDTO dto)
+        {
+            var empresa = await _repo.GetEmpresaCompletaAsync(empresaId)
+                ?? throw new NotFoundException("Empresa não encontrada.");
+
+            // Setores já vinculados
+            var setoresEmpresaIds = empresa.Setores
+                .Select(s => s.SetorId)
+                .ToHashSet();
+
+            // Filtrar setores novos
+            var setoresParaAdicionar = dto.SetoresIds
+                .Where(id => !setoresEmpresaIds.Contains(id))
+                .Distinct()
+                .ToList();
+
+            if (!setoresParaAdicionar.Any())
+                return _mapper.Map<EmpresaResponseDTO>(empresa);
+
+            // Validar existência dos setores
+            var setoresExistentes = await _setorRepo.GetByIdsAsync(setoresParaAdicionar);
+
+            if (setoresExistentes.Count() != setoresParaAdicionar.Count)
+            {
+                var existentesIds = setoresExistentes.Select(s => s.Id).ToHashSet();
+                var setoresInvalidos = setoresParaAdicionar
+                    .Where(id => !existentesIds.Contains(id))
+                    .ToList();
+
+                throw new NotFoundException(
+                    "Um ou mais setores informados não existem.",
+                    setoresInvalidos.Cast<object>()
+                );
+            }
+
+            // Persistir vínculo
+            foreach (var setorId in setoresParaAdicionar)
+            {
+                await _repo.AddSetorAsync(empresaId, setorId);
+            }
+
+            await _repo.SaveChangesAsync();
+
+            var empresaAtualizada = await _repo.GetEmpresaCompletaAsync(empresaId);
+
+            return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);
+        }
+
+        public async Task RemoveSetoresAsync(Guid empresaId, RemoveSetorDTO dto)
+        {
+            foreach (var setorId in dto.SetoresIds)
+            {
+                await _repo.RemoveSetorAsync(empresaId, setorId);
+            }
+
+            await _repo.SaveChangesAsync();
+        }
+
+        public async Task<EmpresaResponseDTO> AlocarFuncionarioSetorAsync(Guid empresaId, AddFuncionarioEmpresaDTO dto)
+        {
+            var empresa = await _repo.GetEmpresaCompletaAsync(empresaId) ?? throw new NotFoundException("Empresa não encontrada.");
+
+            var setoresEmpresaIds = empresa.Setores.Select(s => s.SetorId).ToHashSet();
+
+            List<Guid> setoresInvalidos = [.. dto.Funcionarios
+                .Where(item => !setoresEmpresaIds.Contains(item.SetorId))
+                .Select(item => item.SetorId)];
+
+            if (setoresInvalidos.Count != 0)
+            {
+                throw new NotFoundException(
+                    "Um ou mais setores informados não estão vinculados à empresa.",
+                    setoresInvalidos.Cast<object>()
+                );
+            }
+
+            var funcionarios = (await _funcionarioRepo.FindAsync([.. dto.Funcionarios.Select(f => f.FuncionarioId)])).ToList();
+
+            if (funcionarios.Count < dto.Funcionarios.Count)
+            {
+                var funcionariosExistentesIds = funcionarios.Select(f => f.Id).ToHashSet();
+
+                var funcionariosInvalidos = dto.Funcionarios
+                    .Where(item => !funcionariosExistentesIds.Contains(item.FuncionarioId))
+                    .Select(item => item.FuncionarioId)
+                    .ToList();
+
+                if (funcionariosInvalidos.Count != 0)
+                {
+                    throw new NotFoundException(
+                        "Um ou mais funcionários informados não existem.",
+                        funcionariosInvalidos.Cast<object>()
+                    );
+                }
+            }
+
+
+            foreach (var func in dto.Funcionarios)
+            {
+
+                await _repo.AddFuncionarioAsync(
+                    empresa.Id,
+                    func.SetorId,
+                    func.FuncionarioId,
+                    func.Salario
+                );
+            }
+
+
+            await _repo.SaveChangesAsync();
+
+            var empresaAtualizada = await _repo.GetByIdWithFullDataAsNoTrackingAsync(empresaId);
+
+            return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);
+        }
+
+        public async Task<EmpresaResponseDTO> RemoveFuncionarioAsync(Guid empresaId, RemoveFuncionarioEmpresaDTO dto)
+        {
+            var empresa = await _repo.GetEmpresaCompletaAsync(empresaId)
+                ?? throw new NotFoundException("Empresa não encontrada.");
+
+            // Setores válidos da empresa
+            var setoresEmpresa = empresa.Setores
+                .Select(s => s.SetorId)
+                .ToHashSet();
+
+            // Validação de setores inválidos
+            var setoresInvalidos = dto.Funcionarios
+                .Where(f => !setoresEmpresa.Contains(f.SetorId))
+                .Select(f => f.SetorId)
+                .Distinct()
+                .ToList();
+
+            if (setoresInvalidos.Any())
+            {
+                throw new NotFoundException(
+                    "Um ou mais setores informados não pertencem à empresa.",
+                    setoresInvalidos.Cast<object>()
+                );
+            }
+
+            // Remover vínculos
+            foreach (var item in dto.Funcionarios)
+            {
+                await _repo.RemoveFuncionarioAsync(
+                    empresaId,
+                    item.SetorId,
+                    item.FuncionarioId
+                );
+            }
+
+            await _repo.SaveChangesAsync();
+
+            var empresaAtualizada =
+                await _repo.GetByIdWithFullDataAsNoTrackingAsync(empresaId);
+
+            return _mapper.Map<EmpresaResponseDTO>(empresaAtualizada);
+        }
 
     }
 }

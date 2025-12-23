@@ -7,6 +7,7 @@ namespace ApiEmpresas.Services.Interfaces
         Task<IEnumerable<SetorResponseDTO>> GetAllAsync();
         Task<SetorResponseDTO?> GetByIdAsync(Guid id);
         Task<SetorResponseDTO> CreateAsync(CreateSetorDTO dto);
+        Task<SetorResponseDTO?> UpdateAsync(Guid id, UpdateSetorDTO dto);
         Task<bool> DeleteAsync(Guid id);
     }
 }

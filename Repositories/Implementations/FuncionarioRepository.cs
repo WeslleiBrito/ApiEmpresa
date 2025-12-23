@@ -7,31 +7,61 @@ namespace ApiEmpresas.Repositories.Implementations
 {
     public class FuncionarioRepository : Repository<Funcionario>, IFuncionarioRepository
     {
+
         public FuncionarioRepository(AppDbContext context) : base(context)
         {
         }
 
         public async Task<Funcionario?> GetFuncionarioCompletoAsync(Guid id)
         {
-            return await _dbSet
+            return await _context.Funcionarios
+                .AsNoTracking()
                 .Include(f => f.Endereco)
-                .Include(f => f.Profissao)
-                .Include(f => f.Profissao!.Setor)
+                .Include(f => f.Habilidades)
+                    .ThenInclude(fh => fh.Habilidade)
+                .Include(f => f.FuncionarioSetorVinculo)
+                    .ThenInclude(fs => fs.Empresa)
+                .Include(f => f.FuncionarioSetorVinculo)
+                    .ThenInclude(fs => fs.Setor)
                 .FirstOrDefaultAsync(f => f.Id == id);
         }
 
-        public async Task<bool> ExisteFuncionarioPorSetorAsync(Guid setorId)
+
+        public async Task<bool> ExisteCpfAsync(string cpf)
         {
-            // O funcionário não tem setor direto,
-            // mas tem profissão → que tem SetorId
+            return await _context.Funcionarios.AnyAsync(f => f.Cpf == cpf);
+        }
+
+        public async Task<IEnumerable<Funcionario>> GetAllCompletoAsync()
+        {
             return await _context.Funcionarios
-                .AnyAsync(f => f.Profissao != null && f.Profissao.SetorId == setorId);
+                .AsNoTracking()
+                .Include(f => f.Endereco)
+                .Include(f => f.Habilidades)
+                    .ThenInclude(fh => fh.Habilidade)
+                .Include(f => f.FuncionarioSetorVinculo)
+                    .ThenInclude(fs => fs.Empresa)
+                .Include(f => f.FuncionarioSetorVinculo)
+                    .ThenInclude(fs => fs.Setor)
+                .ToListAsync();
         }
 
-        public async Task<bool> ExisteFuncionarioPorEmpresaAsync(Guid empresaId)
+
+        public async Task AddFuncionarioHabilidadesAsync(IEnumerable<FuncionarioHabilidade> vinculos)
         {
-            return await _context.Funcionarios.AnyAsync(f => f.EmpresaId == empresaId);
+            await _context.FuncionarioHabilidades.AddRangeAsync(vinculos);
         }
 
+        public void RemoveFuncionarioHabilidades(IEnumerable<FuncionarioHabilidade> vinculos)
+        {
+            _context.FuncionarioHabilidades.RemoveRange(vinculos);
+        }
+
+        public async Task<IEnumerable<Funcionario>> FindAsync(IEnumerable<Guid> ids)
+        {
+            return await _dbSet
+                .Where(f => ids.Contains(f.Id))
+                .ToListAsync();
+        }
     }
 }

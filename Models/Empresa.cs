@@ -11,6 +11,8 @@ namespace ApiEmpresas.Models
         [Required]
         public RegimeTributario RegimeTributario { get; set; }
 
+        public override TipoPessoa TipoPessoa { get; set; } = TipoPessoa.Juridica;
+
         // N:N com Setor
         public ICollection<EmpresaSetor> Setores { get; set; } = [];
     }

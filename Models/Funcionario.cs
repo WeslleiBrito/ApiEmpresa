@@ -8,11 +8,13 @@ namespace ApiEmpresas.Models
         public decimal Salario { get; set; }
 
         [Required]
-        public Guid EmpresaId { get; set; }
+        public string Cpf { get; set; } = null!;
+        
+        public override TipoPessoa TipoPessoa { get; set; } = TipoPessoa.Fisica;
 
-        [Required]
-        public Guid ProfissaoId { get; set; }
-
-        public Profissao? Profissao { get; set; }
+        // N:N com Setor
+        public ICollection<FuncionarioSetor> FuncionarioSetorVinculo { get; set; } = [];
+        // N:N com Habilidade
+        public ICollection<FuncionarioHabilidade> Habilidades { get; set; } = [];
     }
 }

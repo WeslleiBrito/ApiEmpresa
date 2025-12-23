@@ -1,38 +1,117 @@
-public class ErrorHandlingMiddleware
+// Errors/ErrorHandlingMiddleware.cs
+using ApiEmpresas.Exceptions; // Importe o namespace das exceções
+using System.Text.Json;
+
+namespace ApiEmpresas.Errors
 {
-    private readonly RequestDelegate _next;
-
-    public ErrorHandlingMiddleware(RequestDelegate next)
+    public class ErrorHandlingMiddleware
     {
-        _next = next;
-    }
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ErrorHandlingMiddleware> _logger;
 
-    public async Task InvokeAsync(HttpContext context)
-    {
-        try
+        public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
         {
-            await _next(context);
+            _next = next;
+            _logger = logger;
         }
-        catch (ValidationException ex)
+
+        public async Task InvokeAsync(HttpContext context)
         {
-            context.Response.StatusCode = 400;
+            try
+            {
+                await _next(context);
+            }
+            catch (ValidationException ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                context.Response.ContentType = "application/json";
+
+                var response = new
+                {
+                    type = "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                    title = "One or more validation errors occurred.",
+                    status = 400,
+                    errors = ex.Errors
+                };
+
+                await context.Response.WriteAsJsonAsync(response);
+            }
+            catch (NotFoundException ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                context.Response.ContentType = "application/json";
+
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    status = 404,
+                    message = ex.Message
+                });
+            }
+            catch(ConflictException ex)
+            {
+                context.Response.StatusCode = StatusCodes.Status409Conflict;
+                context.Response.ContentType = "application/json";
+
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    status = 409,
+                    message = ex.Message
+                });
+            }
+            catch (Exception)
+            {
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                context.Response.ContentType = "application/json";
+
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Erro interno."
+                });
+            }
+        }
+
+
+        private Task HandleExceptionAsync(HttpContext context, Exception ex)
+        {
             context.Response.ContentType = "application/json";
 
-            await context.Response.WriteAsJsonAsync(new
+            // Padrão de resposta
+            var response = new
             {
-                errors = ex.Errors
-            });
-        }
-        catch (Exception ex)
-        {
-            context.Response.StatusCode = 500;
-            context.Response.ContentType = "application/json";
+                status = 500,
+                error = "Erro Interno",
+                message = "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                details = (object?)null // Detalhes apenas se necessário
+            };
 
-            await context.Response.WriteAsJsonAsync(new
+            switch (ex)
             {
-                error = "Erro interno.",
-                details = ex.Message
+                // CASO 1: Exceções controladas da nossa aplicação (404, 403, 400, 409)
+                case AppException appEx:
+                    context.Response.StatusCode = appEx.StatusCode;
+                    response = new
+                    {
+                        status = appEx.StatusCode,
+                        error = appEx.GetType().Name.Replace("Exception", ""), // Ex: NotFound
+                        message = appEx.Message,
+                        details = appEx.Errors // Aqui entram os erros de validação se houver, mas nessa versão vai ser validado no mapper
+                    };
+                    break;
+
+                // CASO 2: Exceção Genérica (Bug não tratado - Erro 500)
+                default:
+                    context.Response.StatusCode = 500;
+                    _logger.LogError(ex, "Erro não tratado ocorrido.");
+                    break;
+            }
+
+            var jsonResult = JsonSerializer.Serialize(response, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true // Opcional, facilita leitura
             });
+
+            return context.Response.WriteAsync(jsonResult);
         }
     }
 }

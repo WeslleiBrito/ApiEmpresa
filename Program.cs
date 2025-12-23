@@ -6,6 +6,7 @@ using ApiEmpresas.Services.Interfaces;
 using ApiEmpresas.Services.Implementations;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using ApiEmpresas.Errors;
 
 
 
@@ -33,16 +34,17 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>)); // gen√
 
 builder.Services.AddScoped<IEmpresaRepository, EmpresaRepository>();
 builder.Services.AddScoped<ISetorRepository, SetorRepository>();
-builder.Services.AddScoped<IProfissaoRepository, ProfissaoRepository>();
 builder.Services.AddScoped<IFuncionarioRepository, FuncionarioRepository>();
+builder.Services.AddScoped<IHabilidadeRepository, HabilidadeRepository>();
 
 // ------------------------------------------------------
 // SERVICES
 // ------------------------------------------------------
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 builder.Services.AddScoped<ISetorService, SetorService>();
-builder.Services.AddScoped<IProfissaoService, ProfissaoService>();
 builder.Services.AddScoped<IFuncionarioService, FuncionarioService>();
+builder.Services.AddScoped<IHabilidadeService, HabilidadeService>();
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -60,13 +62,30 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var retry = 0;
+    while (retry < 10)
+    {
+        try
+        {
+            db.Database.Migrate();
+            break;
+        }
+        catch
+        {
+            retry++;
+            Thread.Sleep(3000);
+        }
+    }
+}
+
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthorization();
 

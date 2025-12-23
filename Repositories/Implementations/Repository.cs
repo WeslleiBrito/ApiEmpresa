@@ -50,5 +50,16 @@ namespace ApiEmpresas.Repositories.Implementations
         {
             _dbSet.Update(entity);
         }
+
+        public async Task<bool> ExistsAsync(Guid id)
+        {
+            var entity = await GetByIdAsync(id);
+            return entity != null;
+        }
+
+        public void Remove(T entity)
+        {
+            _dbSet.Remove(entity);
+        }
     }
 }
