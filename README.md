@@ -1,23 +1,56 @@
 # ApiEmpresa
 
-## 📋 Sobre o Projeto
+## 📌 Visão Geral
 
-Este é um projeto de conclusão de matéria desenvolvido em **.NET 9**. O objetivo da API é fornecer um sistema para gerenciamento de empresas, incluindo o controle de funcionários, setores, habilidades e endereços. O sistema implementa relacionamentos complexos entre essas entidades e validações de regras de negócio.
+**ApiEmpresa** é uma API REST desenvolvida como projeto acadêmico em **ASP.NET Core (.NET 9)**, com foco em boas práticas de arquitetura, persistência de dados e deploy em ambiente cloud.
+
+A API permite o gerenciamento completo de **empresas**, **funcionários**, **setores**, **habilidades** e **endereços**, aplicando regras de negócio, validações e relacionamentos entre entidades.
+
+---
+
+## 🌐 Deploy em Produção
+
+A aplicação está publicada e acessível na AWS (EC2) utilizando **Docker e Docker Compose**.
+
+🔗 **Swagger – Ambiente de Produção:**
+
+👉 [http://54.207.110.120/swagger](http://54.207.110.120/swagger)
+
+> Através do Swagger é possível testar todos os endpoints da API diretamente no navegador.
+
+---
 
 ## 🚀 Tecnologias Utilizadas
 
-* **Linguagem:** C# (.NET 9)
-* **Framework:** ASP.NET Core Web API
-* **Banco de Dados:** MySQL 9.3
-* **ORM:** Entity Framework Core (com Pomelo.EntityFrameworkCore.MySql)
-* **Mapeamento:** AutoMapper
+* **Linguagem:** C#
+* **Framework:** ASP.NET Core Web API (.NET 9)
+* **Banco de Dados:** MySQL 8.x
+* **ORM:** Entity Framework Core (Pomelo.EntityFrameworkCore.MySql)
+* **Mapeamento de Objetos:** AutoMapper
 * **Validação:** FluentValidation
 * **Documentação:** Swagger / OpenAPI
 * **Containerização:** Docker & Docker Compose
+* **Cloud:** AWS EC2 (Linux Ubuntu)
 
-## ⚙️ Pré-requisitos
+---
 
-Para rodar o projeto localmente, você precisará ter instalado:
+## 🏗️ Arquitetura do Projeto
+
+O projeto segue uma arquitetura em camadas, garantindo organização, manutenibilidade e separação de responsabilidades:
+
+* **Controllers:** Camada de entrada da API (endpoints HTTP).
+* **DTOs:** Objetos de transferência de dados (entrada e saída da API).
+* **Services:** Regras de negócio e validações de fluxo.
+* **Repositories:** Acesso e manipulação dos dados no banco.
+* **Entities / Models:** Representação das tabelas do banco de dados.
+* **Validators:** Validações com FluentValidation.
+* **Mapping:** Configurações do AutoMapper.
+
+---
+
+## ⚙️ Pré-requisitos (Ambiente Local)
+
+Para executar o projeto localmente, é necessário ter instalado:
 
 * [.NET SDK 9.0](https://dotnet.microsoft.com/download)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop)
@@ -25,32 +58,26 @@ Para rodar o projeto localmente, você precisará ter instalado:
 
 ---
 
-## 🛠️ Como Executar o Projeto
+## 🛠️ Executando o Projeto Localmente
 
-Siga o passo a passo abaixo para configurar o ambiente e rodar a API.
-
-### 1. Clonar o Repositório
-
-Primeiro, faça o clone do projeto para sua máquina local:
+### 1️⃣ Clonar o Repositório
 
 ```bash
 git clone https://github.com/WeslleiBrito/ApiEmpresa.git
 cd ApiEmpresa
-
 ```
 
-### 2. Configurar o Banco de Dados (Docker)
+---
 
-O projeto utiliza o Docker Compose para subir uma instância do MySQL configurada. O arquivo `docker-compose.yml` já está configurado para expor o banco na porta **3307**.
+### 2️⃣ Subir o Banco de Dados com Docker
 
-Execute o comando na raiz onde está o arquivo `docker-compose.yml`:
+O banco de dados MySQL é executado via Docker Compose.
 
 ```bash
-docker-compose up -d
-
+docker compose up -d
 ```
 
-Isso iniciará o container `mysql_api_empresas` com as seguintes credenciais (definidas no `docker-compose.yml` e `appsettings.json`):
+**Credenciais do Banco:**
 
 * **Host:** localhost
 * **Porta:** 3307
@@ -58,71 +85,85 @@ Isso iniciará o container `mysql_api_empresas` com as seguintes credenciais (de
 * **Usuário:** apiuser
 * **Senha:** apiuser123
 
-### 3. Aplicar as Migrations (Criar Tabelas)
+---
 
-Com o banco de dados rodando, é necessário criar as tabelas utilizando o Entity Framework. Certifique-se de estar na pasta do projeto (onde está o arquivo `.csproj`):
+### 3️⃣ Criar as Tabelas (Migrations)
+
+Com o banco ativo, execute as migrations para criar as tabelas:
 
 ```bash
-# Caso esteja na raiz, entre na pasta do projeto
-cd ApiEmpresa
-
-# Execute a atualização do banco
 dotnet ef database update
-
 ```
 
-### 4. Executar a Aplicação
+---
 
-Agora você pode iniciar a API:
+### 4️⃣ Executar a API
 
 ```bash
 dotnet run
-
 ```
 
-A aplicação será iniciada e mostrará no console as URLs de acesso `http://localhost:5235`.
+A aplicação será iniciada e ficará disponível em:
+
+```
+http://localhost:5235/swagger
+```
 
 ---
 
-## 📖 Documentação da API (Endpoints)
+## 📖 Documentação da API
 
-A maneira mais fácil de explorar e testar os endpoints é através do **Swagger**, que já está configurado no projeto.
+A documentação interativa é disponibilizada via **Swagger**.
 
-1. Com a aplicação rodando, abra o navegador.
-2. Acesse: `http://localhost:<5235>/swagger`.
+### Ambiente Local
 
-### Principais Recursos
+```
+http://localhost:5235/swagger
+```
 
-* **Empresas** (`/api/empresa`):
-* Cadastrar, listar, atualizar e remover empresas.
-* Adicionar/Remover funcionários a uma empresa.
-* Adicionar/Remover setores de uma empresa.
+### Ambiente de Produção (AWS)
 
-
-* **Funcionários** (`/api/funcionario`):
-* Gerenciamento de dados de funcionários.
-* Associação de habilidades aos funcionários.
-
-
-* **Setores** (`/api/setor`):
-* Gerenciamento dos departamentos/setores.
-
-
-* **Habilidades** (`/api/habilidade`):
-* Cadastro de competências (ex: C#, Java, Vendas).
-
-
+```
+http://54.207.110.120/swagger
+```
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📌 Principais Funcionalidades
 
-O projeto segue uma arquitetura em camadas para separar responsabilidades:
+### 🏢 Empresas (`/api/empresa`)
 
-* **Controllers:** Pontos de entrada da API (recebem as requisições HTTP).
-* **DTOs (Data Transfer Objects):** Objetos usados para trafegar dados entre o cliente e o servidor, garantindo que as entidades de domínio não sejam expostas diretamente.
-* **Services:** Contém as regras de negócio.
-* **Repositories:** Responsável pelo acesso direto ao banco de dados.
-* **Models/Entities:** Representam as tabelas do banco de dados.
-* **Validators:** Regras de validação (FluentValidation) para garantir a integridade dos dados recebidos (ex: validação de CPF/CNPJ).
-* **Mapping:** Configurações do AutoMapper para converter Models em DTOs e vice-versa.
+* Cadastro, listagem, atualização e remoção
+* Associação de funcionários
+* Associação de setores
+
+### 👨‍💼 Funcionários (`/api/funcionario`)
+
+* CRUD completo
+* Associação de habilidades
+
+### 🏬 Setores (`/api/setor`)
+
+* Gerenciamento de setores/departamentos
+
+### 🧠 Habilidades (`/api/habilidade`)
+
+* Cadastro e gerenciamento de competências
+
+---
+
+## ☁️ Deploy (Resumo Técnico)
+
+* API e MySQL executados em containers Docker
+* Docker Compose para orquestração
+* Porta **80** exposta para acesso público
+* Banco de dados não exposto externamente
+* Migrations aplicadas automaticamente na inicialização
+
+---
+
+## 📚 Observações Finais
+
+Este projeto foi desenvolvido com foco educacional, aplicando conceitos modernos de desenvolvimento backend, containerização e deploy em nuvem.
+
+Sugestões e melhorias são bem-vindas!
